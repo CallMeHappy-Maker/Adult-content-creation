@@ -1,0 +1,10 @@
+
+4```javascript
+// filepath: c:\Users\User\Documents\GitHub\adult-content-creation\test\modules.test.js
+const ageGate = require('../age-gate');
+const formValidation = require('../form-validation');
+
+test('modules load', () => {
+  expect(ageGate).toBeTruthy();
+  expect(formValidation).toBeTruthy();
+});

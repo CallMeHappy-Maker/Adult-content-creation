@@ -1,0 +1,50 @@
+
+body {
+  background: #000;
+  color: #eee;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  color: darkred;
+}
+
+#age-gate {
+  text-align: center;
+  margin-top: 10%;
+}
+
+button {
+  background: darkred;
+  color: #fff;
+  border: none;
+  padding: 15px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: darkgreen;
+}
+
+.hidden {
+  display: none;
+}
+
+form {
+  max-width: 600px;
+  margin: auto;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  background: #111;
+  color: #fff;
+  border: 1px solid darkgreen;
+}

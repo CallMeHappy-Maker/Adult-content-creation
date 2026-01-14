@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>18+ Adult Content Request</title>
+<link rel="stylesheet" href="css/style.css">
+<script defer src="js/age-gate.js"></script>
+<script defer src="js/form-validation.js"></script>
+</head>
+<body>
+<div id="age-gate">
+  <h1>⚠️ ADULT CONTENT WARNING ⚠️</h1>
+  <p>
+    This website contains <strong>explicit sexual content</strong> intended strictly for adults.
+    By continuing, you confirm that you are <strong>18 years of age or older</strong>,
+    that you consent to viewing sexually explicit material,
+    and that such material is legal in your jurisdiction.
+  </p>
+  <button onclick="acceptAge()">I AM 18+ AND CONSENT</button>
+</div>
+
+<div id="main-content" class="hidden">
+  <h1>Adult Content Creation Appointment Request</h1>
+
+  <form id="adultForm">
+    <label>Full Legal Name *</label>
+    <input type="text" required>
+
+    <label>Email Address *</label>
+    <input type="email" required>
+
+    <label>Phone Number *</label>
+    <input type="tel" required>
+
+    <label>Describe Your Request *</label>
+    <textarea required placeholder="Be explicit. Describe exactly what type of adult content you are requesting."></textarea>
+
+    <label>
+      <input type="checkbox" required>
+      I confirm I am 18+, consenting, and understand this involves explicit adult sexual content.
+    </label>
+
+    <button type="submit">Submit Adult Request</button>
+  </form>
+</div>
+</body>
+</html>
