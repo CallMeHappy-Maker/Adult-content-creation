@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const identitySection = document.getElementById("chat-identity");
   const chatApp = document.getElementById("chat-app");
+  const chatError = document.getElementById("chat-error");
+  const chatErrorMsg = document.getElementById("chat-error-msg");
   const loadChatsBtn = document.getElementById("load-chats-btn");
   const conversationList = document.getElementById("conversation-list");
   const noConversations = document.getElementById("no-conversations");
@@ -25,33 +27,62 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatSidebar = document.querySelector(".chat-sidebar");
   const chatMain = document.querySelector(".chat-main");
 
+  function showError(msg) {
+    identitySection.classList.add("hidden");
+    chatApp.classList.add("hidden");
+    chatError.classList.remove("hidden");
+    chatErrorMsg.textContent = msg || "Something went wrong. Please try again.";
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+  }
+
+  function waitForAuth(timeout) {
+    return new Promise((resolve) => {
+      const start = Date.now();
+      function check() {
+        try {
+          const authData = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+          if (authData && authData.user) return resolve(authData);
+        } catch (e) {}
+        if (Date.now() - start > timeout) return resolve(null);
+        setTimeout(check, 200);
+      }
+      check();
+    });
+  }
+
   const params = new URLSearchParams(window.location.search);
   const presetCreator = params.get("creator");
   const presetBuyer = params.get("buyer");
 
   if (presetBuyer && presetCreator) {
-    currentUser = presetBuyer;
-    currentRole = "buyer";
-    identitySection.classList.add("hidden");
-    chatApp.classList.remove("hidden");
-    loadConversations().then(() => {
-      startConversation(presetCreator, presetBuyer);
+    waitForAuth(3000).then((authData) => {
+      if (!authData || !authData.user) {
+        showError("You need to be logged in to use messages. Please log in and try again.");
+        return;
+      }
+      const profile = authData.profile;
+      const displayName = profile && profile.stage_name ? profile.stage_name : (authData.user.first_name || authData.user.email || presetBuyer);
+      currentUser = displayName;
+      currentRole = "buyer";
+      identitySection.classList.add("hidden");
+      chatApp.classList.remove("hidden");
+      loadConversations().then(() => {
+        startConversation(presetCreator, displayName);
+      }).catch(() => {
+        showError("Could not load your conversations. Please try again.");
+      });
     });
   } else {
-    setTimeout(() => {
-      try {
-        const authData = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
-        if (authData && authData.user) {
-          const user = authData.user;
-          const profile = authData.profile;
-          const displayName = profile && profile.stage_name ? profile.stage_name : (user.first_name || user.email || 'User');
-          const role = profile && profile.account_type === 'creator' ? 'creator' : 'buyer';
-
-          document.getElementById("identity-name").value = displayName;
-          document.getElementById("identity-role").value = role;
-        }
-      } catch (e) {}
-    }, 600);
+    waitForAuth(3000).then((authData) => {
+      if (authData && authData.user) {
+        const user = authData.user;
+        const profile = authData.profile;
+        const displayName = profile && profile.stage_name ? profile.stage_name : (user.first_name || user.email || 'User');
+        const role = profile && profile.account_type === 'creator' ? 'creator' : 'buyer';
+        document.getElementById("identity-name").value = displayName;
+        document.getElementById("identity-role").value = role;
+      }
+    });
   }
 
   loadChatsBtn.addEventListener("click", () => {
@@ -66,43 +97,50 @@ document.addEventListener("DOMContentLoaded", () => {
     currentRole = role;
     identitySection.classList.add("hidden");
     chatApp.classList.remove("hidden");
-    loadConversations();
+    loadConversations().catch((err) => {
+      if (err.message !== "auth_required") {
+        showError("Could not load your conversations. Please try again.");
+      }
+    });
   });
 
   async function loadConversations() {
-    try {
-      const res = await fetch(`/api/conversations?user=${encodeURIComponent(currentUser)}&role=${currentRole}`);
-      const conversations = await res.json();
-
-      conversationList.innerHTML = "";
-
-      if (conversations.length === 0) {
-        noConversations.classList.remove("hidden");
-        return;
+    const res = await fetch(`/api/conversations?user=${encodeURIComponent(currentUser)}&role=${currentRole}`);
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        showError("You need to be logged in and verified to use messages.");
+        throw new Error("auth_required");
       }
-
-      noConversations.classList.add("hidden");
-
-      conversations.forEach(conv => {
-        const otherName = currentRole === "creator" ? conv.buyer_name : conv.creator_name;
-        const preview = conv.last_message || "No messages yet";
-        const previewText = preview.length > 40 ? preview.substring(0, 40) + "..." : preview;
-        const time = conv.last_message_at ? formatTime(conv.last_message_at) : "";
-
-        const el = document.createElement("div");
-        el.className = "conversation-item" + (conv.id === currentConversationId ? " active" : "");
-        el.setAttribute("data-id", conv.id);
-        el.innerHTML = `
-          <div class="conv-name">${escapeHtml(otherName)}</div>
-          <div class="conv-preview">${escapeHtml(previewText)}</div>
-          ${time ? `<div class="conv-time">${time}</div>` : ""}
-        `;
-        el.addEventListener("click", () => openThread(conv.id, otherName));
-        conversationList.appendChild(el);
-      });
-    } catch (error) {
-      console.error("Failed to load conversations:", error);
+      throw new Error("Failed to load conversations");
     }
+    const conversations = await res.json();
+
+    conversationList.innerHTML = "";
+
+    if (conversations.length === 0) {
+      noConversations.classList.remove("hidden");
+      return;
+    }
+
+    noConversations.classList.add("hidden");
+
+    conversations.forEach(conv => {
+      const otherName = currentRole === "creator" ? conv.buyer_name : conv.creator_name;
+      const preview = conv.last_message || "No messages yet";
+      const previewText = preview.length > 40 ? preview.substring(0, 40) + "..." : preview;
+      const time = conv.last_message_at ? formatTime(conv.last_message_at) : "";
+
+      const el = document.createElement("div");
+      el.className = "conversation-item" + (conv.id === currentConversationId ? " active" : "");
+      el.setAttribute("data-id", conv.id);
+      el.innerHTML = `
+        <div class="conv-name">${escapeHtml(otherName)}</div>
+        <div class="conv-preview">${escapeHtml(previewText)}</div>
+        ${time ? `<div class="conv-time">${time}</div>` : ""}
+      `;
+      el.addEventListener("click", () => openThread(conv.id, otherName));
+      conversationList.appendChild(el);
+    });
   }
 
   function openThread(conversationId, otherName) {
@@ -123,15 +161,24 @@ document.addEventListener("DOMContentLoaded", () => {
     loadMessages(conversationId);
 
     if (pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(() => {
-      loadMessages(conversationId);
-      loadConversations();
+    pollInterval = setInterval(async () => {
+      try {
+        await loadMessages(conversationId);
+        await loadConversations();
+      } catch (e) {}
     }, 5000);
   }
 
   async function loadMessages(conversationId) {
     try {
       const res = await fetch(`/api/conversations/${conversationId}/messages`);
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          showError("You need to be logged in and verified to use messages.");
+          return;
+        }
+        return;
+      }
       const messages = await res.json();
 
       const wasAtBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 50;

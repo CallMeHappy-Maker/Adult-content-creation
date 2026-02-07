@@ -48,12 +48,24 @@
       </div>
     </section>
 
+    <section id="chat-error" class="hidden" style="text-align:center;padding:2rem;">
+      <h2 style="color:#CC0033;">Unable to Load Messages</h2>
+      <p id="chat-error-msg" style="color:#ccc;margin:1rem 0;">Something went wrong. Please try again.</p>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem;">
+        <button onclick="window.location.reload()" class="btn-primary">Try Again</button>
+        <a href="/" class="btn-secondary" style="display:inline-block;padding:0.75rem 1.5rem;text-decoration:none;">Go Home</a>
+      </div>
+    </section>
+
     <section id="chat-app" class="hidden">
       <div class="chat-layout">
         <div class="chat-sidebar">
           <div class="sidebar-header">
             <h3>Conversations</h3>
-            <button id="new-chat-btn" class="btn-new-chat" title="New conversation">+</button>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <a href="/" class="btn-back" title="Back to Home" style="text-decoration:none;font-size:1.2rem;">&#8592;</a>
+              <button id="new-chat-btn" class="btn-new-chat" title="New conversation">+</button>
+            </div>
           </div>
           <div id="conversation-list" class="conversation-list"></div>
           <div id="no-conversations" class="no-conversations">
