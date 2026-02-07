@@ -217,6 +217,81 @@ img, video {
 }
 
 /* ------------------------------
+   Checkout Section
+------------------------------ */
+#checkout {
+  max-width: 600px;
+  margin: 2rem auto;
+  background: #1a1a1a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+#checkout h2 {
+  margin-top: 0;
+  color: #0ff;
+}
+
+.checkout-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 0.95rem;
+}
+
+.checkout-total {
+  border-bottom: none;
+  border-top: 2px solid #0ff;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #0ff;
+}
+
+#pay-btn {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #0f0;
+  color: #121212;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#pay-btn:hover {
+  background: #0c0;
+}
+
+#cancel-checkout-btn {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  background: #333;
+  color: #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#cancel-checkout-btn:hover {
+  background: #555;
+}
+
+#checkout-feedback {
+  margin-top: 0.75rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* ------------------------------
    Responsive Design
 ------------------------------ */
 @media (max-width: 600px) {

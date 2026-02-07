@@ -8,6 +8,7 @@
 <script defer src="js/age-gate.js"></script>
 <script defer src="js/form-validation.js"></script>
 <script defer src="js/app.js"></script>
+<script defer src="js/checkout.js"></script>
 </head>
 <body>
 <div id="age-gate">
@@ -71,6 +72,39 @@
     <button id="create-post-btn">Create Post</button>
 
     <div id="creator-feedback" style="margin-top:10px; color: #0f0;"></div>
+  </section>
+
+  <section id="checkout" class="hidden">
+    <h2>Request Summary</h2>
+    <div id="checkout-details">
+      <div class="checkout-row">
+        <span>Creator:</span>
+        <span id="checkout-creator">-</span>
+      </div>
+      <div class="checkout-row">
+        <span>Content type:</span>
+        <span id="checkout-type">Custom Request</span>
+      </div>
+      <div class="checkout-row">
+        <span>Creator Fee:</span>
+        <span id="checkout-creator-fee">$0.00</span>
+      </div>
+      <div class="checkout-row">
+        <span>Platform Fee (15%):</span>
+        <span id="checkout-platform-fee">$0.00</span>
+      </div>
+      <div class="checkout-row">
+        <span>Processing Fee:</span>
+        <span id="checkout-processing-fee">$0.00</span>
+      </div>
+      <div class="checkout-row checkout-total">
+        <span>Total:</span>
+        <span id="checkout-total">$0.00</span>
+      </div>
+    </div>
+    <button id="pay-btn">Pay Now</button>
+    <button id="cancel-checkout-btn">Cancel</button>
+    <div id="checkout-feedback"></div>
   </section>
 
   <section id="feed">

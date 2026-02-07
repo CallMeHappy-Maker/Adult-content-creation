@@ -1,5 +1,1 @@
-
-document.getElementById('adultForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  alert('Your adult content request has been submitted.');
-});
+// Form validation is now handled by checkout.js
