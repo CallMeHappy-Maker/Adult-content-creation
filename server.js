@@ -2,18 +2,24 @@ const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
 const OpenAI = require('openai');
+const session = require('express-session');
+const ConnectPgSimple = require('connect-pg-simple')(session);
+const passport = require('passport');
+const { discovery, buildEndSessionUrl } = require('openid-client');
+const { Strategy } = require('openid-client/passport');
+const memoizee = require('memoizee');
 
 const app = express();
 const PORT = 5000;
 
-app.use(express.json());
+app.set('trust proxy', 1);
+
+app.use(express.json({ limit: '10mb' }));
 
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   next();
 });
-
-app.use(express.static(path.join(__dirname)));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -23,6 +29,300 @@ const openai = new OpenAI.default({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
+
+const sessionStore = new ConnectPgSimple({
+  pool,
+  tableName: 'sessions',
+  createTableIfMissing: false,
+});
+
+app.use(session({
+  store: sessionStore,
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  },
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
+const ISSUER_URL = process.env.ISSUER_URL || 'https://replit.com/oidc';
+const CLIENT_ID = process.env.REPL_ID;
+
+const getOidcConfig = memoizee(async () => {
+  const config = await discovery(new URL(ISSUER_URL), CLIENT_ID);
+  return config;
+}, { promise: true, maxAge: 3600000 });
+
+async function setupAuth() {
+  const config = await getOidcConfig();
+
+  const callbackURL = `https://${process.env.REPLIT_DOMAINS || 'localhost:5000'}/api/callback`;
+
+  const strategy = new Strategy(
+    {
+      config,
+      scope: 'openid email profile',
+      callbackURL,
+    },
+    (tokenSet, done) => {
+      const claims = tokenSet.claims();
+      const user = {
+        id: claims.sub,
+        email: claims.email || null,
+        first_name: claims.first_name || null,
+        last_name: claims.last_name || null,
+        profile_image_url: claims.profile_image_url || null,
+      };
+      done(null, user);
+    }
+  );
+
+  passport.use(strategy);
+}
+
+app.get('/api/login', (req, res, next) => {
+  passport.authenticate('openid-client', {
+    prompt: 'login consent',
+  })(req, res, next);
+});
+
+app.get('/api/callback',
+  passport.authenticate('openid-client', { failureRedirect: '/' }),
+  async (req, res) => {
+    try {
+      const user = req.user;
+      await pool.query(
+        `INSERT INTO users (id, email, first_name, last_name, profile_image_url, updated_at)
+         VALUES ($1, $2, $3, $4, $5, NOW())
+         ON CONFLICT (id) DO UPDATE SET
+           email = EXCLUDED.email,
+           first_name = EXCLUDED.first_name,
+           last_name = EXCLUDED.last_name,
+           profile_image_url = EXCLUDED.profile_image_url,
+           updated_at = NOW()`,
+        [user.id, user.email, user.first_name, user.last_name, user.profile_image_url]
+      );
+    } catch (error) {
+      console.error('Error upserting user:', error);
+    }
+    res.redirect('/');
+  }
+);
+
+app.get('/api/logout', async (req, res) => {
+  try {
+    const config = await getOidcConfig();
+    const idToken = req.session?.passport?.user?.id_token;
+    req.logout((err) => {
+      if (err) console.error('Logout error:', err);
+      req.session.destroy(() => {
+        const endSessionUrl = buildEndSessionUrl(config, {
+          post_logout_redirect_uri: `${req.protocol}://${req.get('host')}`,
+          id_token_hint: idToken,
+        });
+        res.redirect(endSessionUrl.href);
+      });
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    req.logout(() => {
+      req.session.destroy(() => {
+        res.redirect('/');
+      });
+    });
+  }
+});
+
+app.get('/api/auth/user', async (req, res) => {
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    return res.json(null);
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT u.*, 
+        up.id as profile_id, up.account_type, up.stage_name, up.legal_first_name, up.legal_last_name,
+        up.date_of_birth, up.city, up.state_province, up.country, up.id_document_type,
+        up.id_verified, up.verification_status, up.stripe_customer_id, up.stripe_connect_account_id,
+        up.stripe_onboarding_complete, up.bio, up.specialties,
+        up.created_at as profile_created_at, up.updated_at as profile_updated_at
+       FROM users u
+       LEFT JOIN user_profiles up ON u.id = up.user_id
+       WHERE u.id = $1`,
+      [req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json(null);
+    }
+
+    const row = result.rows[0];
+    const user = {
+      id: row.id,
+      email: row.email,
+      first_name: row.first_name,
+      last_name: row.last_name,
+      profile_image_url: row.profile_image_url,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    };
+
+    let profile = null;
+    if (row.profile_id) {
+      profile = {
+        id: row.profile_id,
+        user_id: row.id,
+        account_type: row.account_type,
+        stage_name: row.stage_name,
+        legal_first_name: row.legal_first_name,
+        legal_last_name: row.legal_last_name,
+        date_of_birth: row.date_of_birth,
+        city: row.city,
+        state_province: row.state_province,
+        country: row.country,
+        id_document_type: row.id_document_type,
+        id_verified: row.id_verified,
+        verification_status: row.verification_status,
+        stripe_customer_id: row.stripe_customer_id,
+        stripe_connect_account_id: row.stripe_connect_account_id,
+        stripe_onboarding_complete: row.stripe_onboarding_complete,
+        bio: row.bio,
+        specialties: row.specialties,
+        created_at: row.profile_created_at,
+        updated_at: row.profile_updated_at,
+      };
+    }
+
+    res.json({ user, profile });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+function isAuthenticated(req, res, next) {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ error: 'Unauthorized' });
+}
+
+app.get('/api/profile', isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM user_profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+    res.json(result.rows[0] || null);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+app.post('/api/profile', isAuthenticated, async (req, res) => {
+  try {
+    const {
+      account_type, stage_name, legal_first_name, legal_last_name,
+      date_of_birth, city, state_province, country, bio, specialties
+    } = req.body;
+
+    const existing = await pool.query(
+      'SELECT id FROM user_profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+
+    let result;
+    if (existing.rows.length > 0) {
+      result = await pool.query(
+        `UPDATE user_profiles SET
+          account_type = COALESCE($2, account_type),
+          stage_name = COALESCE($3, stage_name),
+          legal_first_name = COALESCE($4, legal_first_name),
+          legal_last_name = COALESCE($5, legal_last_name),
+          date_of_birth = COALESCE($6, date_of_birth),
+          city = COALESCE($7, city),
+          state_province = COALESCE($8, state_province),
+          country = COALESCE($9, country),
+          bio = COALESCE($10, bio),
+          specialties = COALESCE($11, specialties),
+          updated_at = NOW()
+         WHERE user_id = $1
+         RETURNING *`,
+        [req.user.id, account_type, stage_name, legal_first_name, legal_last_name,
+         date_of_birth, city, state_province, country, bio, specialties || null]
+      );
+    } else {
+      result = await pool.query(
+        `INSERT INTO user_profiles (user_id, account_type, stage_name, legal_first_name, legal_last_name,
+          date_of_birth, city, state_province, country, bio, specialties)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         RETURNING *`,
+        [req.user.id, account_type || 'buyer', stage_name, legal_first_name, legal_last_name,
+         date_of_birth, city, state_province, country, bio, specialties || null]
+      );
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error saving profile:', error);
+    res.status(500).json({ error: 'Failed to save profile' });
+  }
+});
+
+app.post('/api/profile/upload-id', isAuthenticated, async (req, res) => {
+  try {
+    const { id_document, id_document_type } = req.body;
+
+    if (!id_document) {
+      return res.status(400).json({ error: 'No document provided' });
+    }
+
+    const existing = await pool.query(
+      'SELECT id FROM user_profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+
+    if (existing.rows.length === 0) {
+      await pool.query(
+        `INSERT INTO user_profiles (user_id, id_document_url, id_document_type, verification_status)
+         VALUES ($1, $2, $3, 'submitted')`,
+        [req.user.id, id_document, id_document_type || 'government_id']
+      );
+    } else {
+      await pool.query(
+        `UPDATE user_profiles SET
+          id_document_url = $2,
+          id_document_type = $3,
+          verification_status = 'submitted',
+          updated_at = NOW()
+         WHERE user_id = $1`,
+        [req.user.id, id_document, id_document_type || 'government_id']
+      );
+    }
+
+    res.json({ success: true, verification_status: 'submitted' });
+  } catch (error) {
+    console.error('Error uploading ID:', error);
+    res.status(500).json({ error: 'Failed to upload ID document' });
+  }
+});
+
+app.use(express.static(path.join(__dirname)));
 
 function regexPreFilter(content) {
   const lower = content.toLowerCase();
@@ -250,26 +550,15 @@ app.get('/api/moderation-logs', async (req, res) => {
   }
 });
 
-app.get('/signup.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'signup.html'));
-});
-
-app.get('/chat.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'chat.html'));
-});
-
-app.get('/messaging.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'messaging.html'));
-});
-
-app.get('/creators.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'creators.html'));
-});
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://0.0.0.0:${PORT}`);
-});
+setupAuth()
+  .then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on http://0.0.0.0:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to set up auth:', err);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on http://0.0.0.0:${PORT} (auth setup failed)`);
+    });
+  });

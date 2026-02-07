@@ -28,20 +28,26 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - Dark theme (black/#8B0000 dark red/#0ff cyan)
 - Built with plain HTML, CSS, and vanilla JavaScript
 - Served by Express.js on port 5000
-- Data persisted in localStorage (no backend database yet)
+- User authentication via Replit OIDC (OpenID Connect) with Passport.js
+- PostgreSQL database for users, sessions, profiles, conversations, messages
+- Identity verification system with ID document upload
+- Profile management (account type, legal identity, display name, location, bio, specialties)
 
 ## Project Architecture
 - `index.html` — Marketplace landing page with hero section and featured creators grid
 - `signup.html` — Creator sign-up page with DOB age verification and profile setup (stage name, profile pic, bio, specialties)
 - `creators.html` — Creator registration form + public storefront with services and ordering
+- `verify.html` — Identity verification page (account type, legal identity, DOB, location, ID upload, bio, specialties)
 - `messaging.html` — Moderated messaging console with consent overlay
 - `css/style.css` — Dark theme styling (black background, dark red accents, cyan highlights)
 - `js/age-gate.js` — Age gate toggle logic (button-based, used on index/creators/messaging)
+- `js/auth.js` — Client-side auth utilities (initAuth, getCurrentUser, requireAuth, updateNavAuth)
+- `js/verify.js` — Verification page logic (form validation, ID upload, profile submission)
 - `js/signup.js` — Creator sign-up logic (DOB verification, profile pic upload, specialties, localStorage save)
 - `js/marketplace.js` — Landing page logic (loads creator cards from localStorage)
 - `js/creators.js` — Creator registration, storefront rendering, ordering with fee calculation
 - `js/checkout.js` — Shared checkout/fee calculation utilities (legacy, functions duplicated in creators.js)
-- `server.js` — Express.js static file server on port 5000 with cache-control
+- `server.js` — Express.js server on port 5000 with OIDC auth, session management, profile/auth APIs, messaging APIs
 - `docs/` — Trust & safety, compliance documentation, conversation history
 - `legal/` — Terms of service, privacy policy, disclaimer placeholders
 
@@ -107,6 +113,11 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - `node server.js` — starts the app on port 5000
 
 ## Recent Changes
+- 2026-02-07: Added OIDC authentication (Replit login) with Passport.js, session management, user upsert
+- 2026-02-07: Added identity verification page (verify.html) with account type, legal identity, DOB, location, ID document upload
+- 2026-02-07: Added profile management API routes (GET/POST /api/profile, POST /api/profile/upload-id)
+- 2026-02-07: Added client-side auth utilities (js/auth.js) with nav bar auth state display
+- 2026-02-07: Updated all HTML pages with auth nav integration
 - 2026-02-07: Added creator sign-up page with DOB age verification, profile pic upload, bio, content specialties
 - 2026-02-07: Rebuilt app as content creator marketplace (was community posting site)
 - 2026-02-07: Created marketplace landing page with creator directory

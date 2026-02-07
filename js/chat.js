@@ -37,6 +37,21 @@ document.addEventListener("DOMContentLoaded", () => {
     loadConversations().then(() => {
       startConversation(presetCreator, presetBuyer);
     });
+  } else {
+    setTimeout(() => {
+      try {
+        const authData = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+        if (authData && authData.user) {
+          const user = authData.user;
+          const profile = authData.profile;
+          const displayName = profile && profile.stage_name ? profile.stage_name : (user.first_name || user.email || 'User');
+          const role = profile && profile.account_type === 'creator' ? 'creator' : 'buyer';
+
+          document.getElementById("identity-name").value = displayName;
+          document.getElementById("identity-role").value = role;
+        }
+      } catch (e) {}
+    }, 600);
   }
 
   loadChatsBtn.addEventListener("click", () => {

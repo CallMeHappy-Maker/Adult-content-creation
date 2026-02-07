@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Identity Verification - Adult Content Marketplace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<script defer src="js/auth.js"></script>
+<script defer src="js/age-gate.js"></script>
+<script defer src="js/verify.js"></script>
+</head>
+<body>
+<div id="age-gate">
+  <h1>⚠️ ADULT CONTENT WARNING ⚠️</h1>
+  <p>
+    This website contains <strong>explicit sexual content</strong> intended strictly for adults.
+    By continuing, you confirm that you are <strong>18 years of age or older</strong>,
+    that you consent to viewing sexually explicit material,
+    and that such material is legal in your jurisdiction.
+  </p>
+  <button onclick="acceptAge()">I AM 18+ AND CONSENT</button>
+</div>
+
+<div id="main-content" class="hidden">
+  <header>
+    <h1>Adult Content Marketplace</h1>
+    <p>Identity Verification</p>
+    <nav id="main-nav">
+      <a href="/">Home</a>
+      <a href="/creators.html">Creators</a>
+      <a href="/signup.html">Sign Up</a>
+      <a href="/chat.html">Messages</a>
+      <div id="auth-nav"></div>
+    </nav>
+  </header>
+
+  <main>
+    <section id="verify-section">
+      <h2>Complete Your Verification</h2>
+      <p class="verify-intro">Verify your identity to access all platform features. This process ensures safety and compliance for all users.</p>
+
+      <div id="verification-status-bar" class="hidden">
+        <div class="status-badge" id="status-badge"></div>
+      </div>
+
+      <div class="verify-form" id="verify-form">
+        <div class="verify-step">
+          <h3>1. Account Type</h3>
+          <p class="step-note">How will you use this platform?</p>
+          <div class="account-type-options">
+            <label class="account-type-option">
+              <input type="radio" name="account_type" value="creator">
+              <span class="account-type-card">
+                <strong>Creator</strong>
+                <span>I create and sell adult content</span>
+              </span>
+            </label>
+            <label class="account-type-option">
+              <input type="radio" name="account_type" value="buyer">
+              <span class="account-type-card">
+                <strong>Buyer</strong>
+                <span>I browse and purchase content</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="verify-step">
+          <h3>2. Display Identity</h3>
+          <label for="v-stage-name">Stage Name / Display Name</label>
+          <input type="text" id="v-stage-name" placeholder="Your public display name">
+          <p class="step-note">This is what other users will see</p>
+        </div>
+
+        <div class="verify-step">
+          <h3>3. Legal Identity (Private)</h3>
+          <label for="v-legal-first">Legal First Name</label>
+          <input type="text" id="v-legal-first" placeholder="Legal first name">
+          <label for="v-legal-last">Legal Last Name</label>
+          <input type="text" id="v-legal-last" placeholder="Legal last name">
+          <p class="step-note">Your legal name is stored securely and never shown publicly</p>
+        </div>
+
+        <div class="verify-step">
+          <h3>4. Date of Birth</h3>
+          <p class="step-note">You must be 18 or older to use this platform</p>
+          <div class="dob-fields">
+            <div class="dob-field">
+              <label for="v-dob-month">Month</label>
+              <select id="v-dob-month">
+                <option value="">--</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+            <div class="dob-field">
+              <label for="v-dob-day">Day</label>
+              <select id="v-dob-day">
+                <option value="">--</option>
+              </select>
+            </div>
+            <div class="dob-field">
+              <label for="v-dob-year">Year</label>
+              <select id="v-dob-year">
+                <option value="">--</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="verify-step">
+          <h3>5. Location</h3>
+          <label for="v-city">City</label>
+          <input type="text" id="v-city" placeholder="City">
+          <label for="v-state">State / Province</label>
+          <input type="text" id="v-state" placeholder="State or Province">
+          <label for="v-country">Country</label>
+          <select id="v-country">
+            <option value="">Select country...</option>
+            <option value="US">United States</option>
+            <option value="CA">Canada</option>
+            <option value="GB">United Kingdom</option>
+            <option value="AU">Australia</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+            <option value="ES">Spain</option>
+            <option value="IT">Italy</option>
+            <option value="NL">Netherlands</option>
+            <option value="BR">Brazil</option>
+            <option value="MX">Mexico</option>
+            <option value="JP">Japan</option>
+            <option value="KR">South Korea</option>
+            <option value="IN">India</option>
+            <option value="SE">Sweden</option>
+            <option value="NO">Norway</option>
+            <option value="DK">Denmark</option>
+            <option value="FI">Finland</option>
+            <option value="CH">Switzerland</option>
+            <option value="AT">Austria</option>
+            <option value="BE">Belgium</option>
+            <option value="IE">Ireland</option>
+            <option value="NZ">New Zealand</option>
+            <option value="PT">Portugal</option>
+            <option value="PL">Poland</option>
+            <option value="CZ">Czech Republic</option>
+            <option value="RO">Romania</option>
+            <option value="AR">Argentina</option>
+            <option value="CO">Colombia</option>
+            <option value="CL">Chile</option>
+            <option value="ZA">South Africa</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+
+        <div class="verify-step">
+          <h3>6. ID Document Upload</h3>
+          <p class="step-note">Upload a government-issued photo ID for age verification</p>
+          <div class="id-type-select">
+            <label for="v-id-type">Document Type</label>
+            <select id="v-id-type">
+              <option value="drivers_license">Driver's License</option>
+              <option value="passport">Passport</option>
+              <option value="government_id">Government ID</option>
+            </select>
+          </div>
+          <div class="id-upload-area">
+            <label for="v-id-file" class="btn-upload">Choose File</label>
+            <input type="file" id="v-id-file" accept="image/*" class="hidden">
+            <p class="upload-hint">Accepted: JPG, PNG (max 5MB)</p>
+          </div>
+          <div id="id-preview" class="id-preview hidden">
+            <img id="id-preview-img" alt="ID Preview">
+            <button type="button" id="remove-id-btn" class="btn-remove">&times;</button>
+          </div>
+          <p class="step-note">Your ID is stored securely for age verification compliance</p>
+        </div>
+
+        <div class="verify-step" id="bio-section">
+          <h3>7. Bio (Optional)</h3>
+          <label for="v-bio">About You</label>
+          <textarea id="v-bio" rows="4" placeholder="Tell others about yourself..."></textarea>
+        </div>
+
+        <div class="verify-step hidden" id="specialties-section">
+          <h3>8. Content Specialties</h3>
+          <p class="step-note">Select the types of content you plan to offer:</p>
+          <div class="specialties-grid">
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="v-specialty" value="custom-video">
+              <span class="specialty-card">
+                <span class="specialty-icon">🎬</span>
+                <span class="specialty-name">Custom Videos</span>
+                <span class="specialty-desc">Personalized video content made to order</span>
+              </span>
+            </label>
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="v-specialty" value="custom-photos">
+              <span class="specialty-card">
+                <span class="specialty-icon">📸</span>
+                <span class="specialty-name">Custom Photos</span>
+                <span class="specialty-desc">Tailored photo sets and galleries</span>
+              </span>
+            </label>
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="v-specialty" value="in-person">
+              <span class="specialty-card">
+                <span class="specialty-icon">🤝</span>
+                <span class="specialty-name">In-Person Sessions</span>
+                <span class="specialty-desc">Face-to-face content creation meetups</span>
+              </span>
+            </label>
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="v-specialty" value="video-call">
+              <span class="specialty-card">
+                <span class="specialty-icon">📹</span>
+                <span class="specialty-name">Video Calls</span>
+                <span class="specialty-desc">Live one-on-one video sessions</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <button type="button" id="submit-verification" class="btn-save">Complete Verification</button>
+        <div id="verify-feedback"></div>
+      </div>
+
+      <div id="verify-success" class="hidden">
+        <div class="success-box">
+          <h3>Verification Submitted!</h3>
+          <p>Your identity verification has been submitted for review.</p>
+          <div class="status-badge status-submitted">Status: Submitted</div>
+          <div class="verify-actions">
+            <a href="/" class="btn-primary">Go to Marketplace</a>
+            <a href="/creators.html" class="btn-secondary">Set Up Creator Profile</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
