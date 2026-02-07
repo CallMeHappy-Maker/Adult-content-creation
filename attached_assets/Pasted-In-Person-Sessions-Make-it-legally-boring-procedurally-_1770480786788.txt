@@ -1,0 +1,86 @@
+In-Person Sessions
+Make it legally boring, procedurally safe, and unattractive to bad actors
+Your goal is not to make this “safe” in an absolute sense — that’s impossible.
+Your goal is to make it clearly not your responsibility while still usable.
+1. Reframe What the Platform Is Doing (Language Matters)
+Never describe this as facilitating an encounter.
+Use this framing everywhere (UI, DB fields, emails):
+“The platform enables time-based availability listings and booking requests between independent parties.”
+Avoid terms like:
+meet
+hookup
+escort
+sexual service
+Prefer:
+session
+appearance
+booking
+time-based service
+availability window
+This matters for:
+Stripe reviews
+Hosting providers
+Law enforcement inquiries
+2. Booking Flow (Minimum Liability Version)
+Step-by-Step Safe Flow
+Creator lists availability
+Time window
+City / general area only
+Price per time unit
+Optional notes (non-explicit)
+Buyer submits booking request
+Selects time window
+Pays platform-held funds (not instant payout)
+Accepts disclaimer
+Creator manually confirms
+No auto-confirm
+Can decline without reason
+Can suggest alternate time
+Platform releases funds after delay
+Only after session time passes
+With dispute window
+Why manual confirmation matters:
+It demonstrates non-automation of real-world interactions.
+3. Data Minimization (Huge Win, Low Effort)
+Never store:
+Exact addresses
+Real-time location
+Private instructions
+Allow:
+City
+General area (optional free text, length-limited)
+Time window
+If someone demands address exchange → that happens off-platform, not logged.
+4. Mandatory Safety & Liability Acknowledgment
+At booking confirmation, require explicit acceptance:
+“The platform does not supervise, verify, or participate in in-person sessions.
+All interactions occur independently between users.”
+Log:
+User ID
+Timestamp
+IP
+Disclaimer version
+This protects you more than any fancy feature.
+5. Stripe-Protective Metadata Strategy
+Stripe will inspect metadata.
+Safe fields:
+service_type: time_based_booking
+duration_minutes
+city
+booking_id
+Avoid storing or transmitting:
+Descriptions of activities
+Messages inside payment objects
+Keep payments boring.
+6. Emergency Kill Switch (Add This Now)
+You need a one-click global disable:
+“Pause in-person bookings”
+Reasons:
+Stripe inquiry
+Legal concern
+Safety incident
+This should:
+Hide service type
+Prevent new bookings
+Leave historical data intact
+This is a maturity signal.
