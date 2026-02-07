@@ -82,6 +82,8 @@ const getOidcConfig = memoizee(async () => {
   return config;
 }, { promise: true, maxAge: 3600000 });
 
+let authReady = false;
+
 async function setupAuth() {
   const config = await getOidcConfig();
 
@@ -107,12 +109,23 @@ async function setupAuth() {
   );
 
   passport.use(strategy);
+  authReady = true;
 }
 
 const ALLOWED_REDIRECTS = ['/', '/signup.html', '/client-signup.html', '/verify.html', '/creators.html', '/chat.html', '/admin.html', '/creator-settings.html', '/creator-onboarding.html'];
 const ALLOWED_ACCOUNT_TYPES = ['creator', 'buyer'];
 
 app.get('/api/login', (req, res, next) => {
+  if (!authReady) {
+    return res.status(503).send(`
+      <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Loading...</title>
+      <meta http-equiv="refresh" content="2">
+      <style>body{background:#121212;color:#eee;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+      .box{text-align:center;padding:2rem;}.spinner{border:3px solid #333;border-top:3px solid #CC0033;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 1rem;}
+      @keyframes spin{to{transform:rotate(360deg)}}</style></head>
+      <body><div class="box"><div class="spinner"></div><h2>Setting up login...</h2><p>This page will refresh automatically in a moment.</p></div></body></html>
+    `);
+  }
   if (req.query.redirect && ALLOWED_REDIRECTS.includes(req.query.redirect)) {
     req.session.loginRedirect = req.query.redirect;
   }
@@ -124,7 +137,12 @@ app.get('/api/login', (req, res, next) => {
   })(req, res, next);
 });
 
-app.get('/api/callback',
+app.get('/api/callback', (req, res, next) => {
+  if (!authReady) {
+    return res.redirect('/');
+  }
+  next();
+},
   passport.authenticate('openid-client', { failureRedirect: '/' }),
   async (req, res) => {
     try {
