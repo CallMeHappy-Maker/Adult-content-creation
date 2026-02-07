@@ -11,6 +11,10 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname)));
 
+app.get('/signup.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'signup.html'));
+});
+
 app.get('/messaging.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'messaging.html'));
 });

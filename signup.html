@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Creator Sign Up - Adult Content Marketplace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<script defer src="js/signup.js"></script>
+</head>
+<body>
+
+<div id="age-verify-gate">
+  <div class="age-verify-container">
+    <h1>Creator Sign Up</h1>
+    <p class="age-verify-subtitle">Age verification is required before you can register as a creator on this platform.</p>
+
+    <div class="age-verify-box">
+      <h2>Verify Your Age</h2>
+      <p>You must be <strong>18 years of age or older</strong> to create an account. Please enter your date of birth below.</p>
+
+      <div class="dob-fields">
+        <div class="dob-field">
+          <label for="dob-month">Month</label>
+          <select id="dob-month">
+            <option value="">--</option>
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+        </div>
+        <div class="dob-field">
+          <label for="dob-day">Day</label>
+          <select id="dob-day">
+            <option value="">--</option>
+          </select>
+        </div>
+        <div class="dob-field">
+          <label for="dob-year">Year</label>
+          <select id="dob-year">
+            <option value="">--</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="verify-age-btn" class="btn-primary">Verify & Continue</button>
+      <div id="age-verify-feedback"></div>
+
+      <p class="age-verify-legal">By proceeding, you confirm that you are of legal age to view and create adult content in your jurisdiction, and that you consent to the platform's terms of service.</p>
+    </div>
+
+    <div class="age-verify-footer">
+      <a href="/">Back to Marketplace</a>
+    </div>
+  </div>
+</div>
+
+<div id="main-content" class="hidden">
+  <header>
+    <h1>Adult Content Marketplace</h1>
+    <p>Creator Registration</p>
+    <nav id="main-nav">
+      <a href="/">Home</a>
+      <a href="/creators.html">Creators</a>
+      <a href="/signup.html" class="active">Sign Up</a>
+      <a href="/messaging.html">Messages</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="signup-section">
+      <h2>Set Up Your Creator Profile</h2>
+      <p class="signup-intro">Complete your profile to start listing services. You can always edit this later.</p>
+
+      <div class="signup-form">
+        <div class="profile-pic-section">
+          <div class="profile-pic-preview" id="profile-pic-preview">
+            <span id="profile-pic-placeholder">+</span>
+            <img id="profile-pic-img" class="hidden" alt="Profile preview">
+          </div>
+          <label for="profile-pic-input" class="btn-upload">Upload Profile Picture</label>
+          <input type="file" id="profile-pic-input" accept="image/*" class="hidden">
+          <p class="upload-hint">JPG or PNG, max 2MB</p>
+        </div>
+
+        <label for="stage-name">Stage Name / Display Name</label>
+        <input type="text" id="stage-name" placeholder="Your creator name" required>
+
+        <label for="creator-bio">Bio / About You</label>
+        <textarea id="creator-bio" rows="4" placeholder="Tell potential buyers about yourself, your style, and what makes your content unique..."></textarea>
+
+        <div class="specialties-section">
+          <h3>Content Specialties</h3>
+          <p class="specialties-hint">Select all the types of content you plan to offer:</p>
+          <div class="specialties-grid">
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="specialty" value="custom-video">
+              <span class="specialty-card">
+                <span class="specialty-icon">🎬</span>
+                <span class="specialty-name">Custom Videos</span>
+                <span class="specialty-desc">Personalized video content made to order</span>
+              </span>
+            </label>
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="specialty" value="custom-photos">
+              <span class="specialty-card">
+                <span class="specialty-icon">📸</span>
+                <span class="specialty-name">Custom Photos</span>
+                <span class="specialty-desc">Tailored photo sets and galleries</span>
+              </span>
+            </label>
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="specialty" value="in-person">
+              <span class="specialty-card">
+                <span class="specialty-icon">🤝</span>
+                <span class="specialty-name">In-Person Sessions</span>
+                <span class="specialty-desc">Face-to-face content creation meetups</span>
+              </span>
+            </label>
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="specialty" value="video-call">
+              <span class="specialty-card">
+                <span class="specialty-icon">📹</span>
+                <span class="specialty-name">Video Calls</span>
+                <span class="specialty-desc">Live one-on-one video sessions</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <button type="button" id="save-creator-btn" class="btn-save">Create My Profile</button>
+        <div id="signup-feedback"></div>
+
+        <div id="signup-success" class="hidden">
+          <div class="success-box">
+            <h3>Profile Created!</h3>
+            <p>Your creator profile is live. Now add your services and pricing.</p>
+            <a href="#" id="go-to-services" class="btn-primary">Add Services & Pricing</a>
+            <a href="#" id="view-my-storefront" class="btn-secondary" style="display:inline-block; margin-top:0.5rem; text-align:center; text-decoration:none;">View My Storefront</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

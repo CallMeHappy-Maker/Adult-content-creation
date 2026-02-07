@@ -23,7 +23,8 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - Order flow with fee breakdown and in-person session booking (date/time/location)
 - Age verification gate on all pages
 - Moderated messaging console with consent overlay, violation detection, audit logs
-- Navigation bar linking all pages (Home, Creators, Messages)
+- Creator sign-up page with DOB-based age verification and profile setup
+- Navigation bar linking all pages (Home, Creators, Sign Up, Messages)
 - Dark theme (black/#8B0000 dark red/#0ff cyan)
 - Built with plain HTML, CSS, and vanilla JavaScript
 - Served by Express.js on port 5000
@@ -31,10 +32,12 @@ A web-based adult content creator marketplace where creators set up storefronts,
 
 ## Project Architecture
 - `index.html` — Marketplace landing page with hero section and featured creators grid
+- `signup.html` — Creator sign-up page with DOB age verification and profile setup (stage name, profile pic, bio, specialties)
 - `creators.html` — Creator registration form + public storefront with services and ordering
 - `messaging.html` — Moderated messaging console with consent overlay
 - `css/style.css` — Dark theme styling (black background, dark red accents, cyan highlights)
-- `js/age-gate.js` — Age gate toggle logic
+- `js/age-gate.js` — Age gate toggle logic (button-based, used on index/creators/messaging)
+- `js/signup.js` — Creator sign-up logic (DOB verification, profile pic upload, specialties, localStorage save)
 - `js/marketplace.js` — Landing page logic (loads creator cards from localStorage)
 - `js/creators.js` — Creator registration, storefront rendering, ordering with fee calculation
 - `js/checkout.js` — Shared checkout/fee calculation utilities (legacy, functions duplicated in creators.js)
@@ -104,6 +107,7 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - `node server.js` — starts the app on port 5000
 
 ## Recent Changes
+- 2026-02-07: Added creator sign-up page with DOB age verification, profile pic upload, bio, content specialties
 - 2026-02-07: Rebuilt app as content creator marketplace (was community posting site)
 - 2026-02-07: Created marketplace landing page with creator directory
 - 2026-02-07: Built creator registration with service builder

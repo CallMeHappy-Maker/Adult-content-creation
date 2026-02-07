@@ -569,6 +569,304 @@ main {
   margin: 1.5rem auto 1rem;
 }
 
+#age-verify-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.age-verify-container {
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.age-verify-container h1 {
+  color: darkred;
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.age-verify-subtitle {
+  color: #aaa;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+}
+
+.age-verify-box {
+  background: #1a1a1a;
+  padding: 2rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid #333;
+}
+
+.age-verify-box h2 {
+  color: #0ff;
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+}
+
+.age-verify-box > p {
+  color: #ccc;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.dob-fields {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.dob-field {
+  flex: 1;
+}
+
+.dob-field label {
+  display: block;
+  color: #aaa;
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.dob-field select {
+  width: 100%;
+  padding: 0.6rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #222;
+  color: #eee;
+  font-size: 0.9rem;
+  appearance: auto;
+}
+
+#age-verify-feedback {
+  margin-top: 1rem;
+  font-weight: bold;
+  min-height: 1.2rem;
+}
+
+.age-verify-legal {
+  color: #666;
+  font-size: 0.75rem;
+  margin-top: 1.25rem;
+  line-height: 1.4;
+}
+
+.age-verify-footer {
+  margin-top: 1.5rem;
+}
+
+.age-verify-footer a {
+  color: #0ff;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.age-verify-footer a:hover {
+  text-decoration: underline;
+}
+
+#signup-section {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#signup-section h2 {
+  color: #0ff;
+  margin-bottom: 0.25rem;
+}
+
+.signup-intro {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.signup-form {
+  background: #1a1a1a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.signup-form label {
+  display: block;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+.signup-form input[type="text"],
+.signup-form textarea {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #222;
+  color: #eee;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+}
+
+.signup-form textarea {
+  resize: vertical;
+}
+
+.profile-pic-section {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.profile-pic-preview {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: #222;
+  border: 3px dashed #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.profile-pic-preview:hover {
+  border-color: #0ff;
+}
+
+#profile-pic-placeholder {
+  color: #555;
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+#profile-pic-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.btn-upload {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background: #2a2a2a;
+  color: #0ff;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid #333;
+  transition: background 0.2s;
+}
+
+.btn-upload:hover {
+  background: #333;
+}
+
+.upload-hint {
+  color: #666;
+  font-size: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.specialties-section {
+  margin-top: 1.5rem;
+}
+
+.specialties-section h3 {
+  color: #0ff;
+  margin: 0 0 0.25rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+.specialties-hint {
+  color: #aaa;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.specialties-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.specialty-checkbox {
+  display: block;
+  cursor: pointer;
+}
+
+.specialty-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.specialty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem 0.5rem;
+  background: #222;
+  border: 2px solid #333;
+  border-radius: 8px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.specialty-checkbox input:checked + .specialty-card {
+  border-color: #0ff;
+  background: #1a2a2a;
+}
+
+.specialty-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.4rem;
+}
+
+.specialty-name {
+  color: #eee;
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+}
+
+.specialty-desc {
+  color: #888;
+  font-size: 0.7rem;
+  line-height: 1.3;
+}
+
+#signup-feedback {
+  margin-top: 0.75rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.success-box {
+  background: #1a2a1a;
+  border: 1px solid #0f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.success-box h3 {
+  color: #0f0;
+  margin: 0 0 0.5rem;
+  border: none;
+}
+
+.success-box p {
+  color: #ccc;
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 600px) {
   header h1 {
     font-size: 1.3rem;
@@ -594,8 +892,21 @@ main {
     padding: 0.75rem;
   }
 
-  .setup-form, .order-form, #storefront-header {
+  .setup-form, .order-form, #storefront-header, .signup-form {
     margin-left: 0.5rem;
     margin-right: 0.5rem;
+  }
+
+  .specialties-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dob-fields {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .age-verify-box {
+    padding: 1.5rem 1rem;
   }
 }
