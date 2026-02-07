@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Creators - Adult Content Marketplace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<script defer src="js/age-gate.js"></script>
+<script defer src="js/creators.js"></script>
+</head>
+<body>
+<div id="age-gate">
+  <h1>⚠️ ADULT CONTENT WARNING ⚠️</h1>
+  <p>
+    This website contains <strong>explicit sexual content</strong> intended strictly for adults.
+    By continuing, you confirm that you are <strong>18 years of age or older</strong>,
+    that you consent to viewing sexually explicit material,
+    and that such material is legal in your jurisdiction.
+  </p>
+  <button onclick="acceptAge()">I AM 18+ AND CONSENT</button>
+</div>
+
+<div id="main-content" class="hidden">
+  <header>
+    <h1>Adult Content Marketplace</h1>
+    <p>Browse creators. Order custom content.</p>
+    <nav id="main-nav">
+      <a href="/">Home</a>
+      <a href="/creators.html" class="active">Creators</a>
+      <a href="/messaging.html">Messages</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="creator-setup" class="hidden">
+      <h2>Register as a Creator</h2>
+      <div class="setup-form">
+        <label for="creator-name">Creator Name</label>
+        <input type="text" id="creator-name" placeholder="Your display name" required>
+
+        <label for="creator-bio">Bio</label>
+        <textarea id="creator-bio" rows="3" placeholder="Tell buyers about yourself..."></textarea>
+
+        <h3>Your Services</h3>
+        <div id="services-list"></div>
+
+        <div class="add-service-form" id="add-service-form">
+          <h4>Add a Service</h4>
+          <label for="service-type">Service Type</label>
+          <select id="service-type">
+            <option value="custom-video">Custom Video</option>
+            <option value="custom-photos">Custom Photos</option>
+            <option value="in-person">In-Person Session</option>
+            <option value="video-call">Video Call</option>
+          </select>
+
+          <label for="service-title">Title</label>
+          <input type="text" id="service-title" placeholder="e.g. Personalized Video Message">
+
+          <label for="service-description">Description</label>
+          <textarea id="service-description" rows="2" placeholder="Describe what the buyer gets..."></textarea>
+
+          <label for="service-price">Price ($)</label>
+          <input type="number" id="service-price" min="1" step="0.01" placeholder="25.00">
+
+          <button type="button" id="add-service-btn" class="btn-primary">Add Service</button>
+        </div>
+
+        <button type="button" id="save-profile-btn" class="btn-save">Save Profile & Services</button>
+        <div id="setup-feedback"></div>
+        <div id="storefront-link" class="hidden">
+          <a href="#" id="view-storefront-link" class="btn-primary">View Your Storefront</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="storefront" class="hidden">
+      <a href="/" class="back-link">&larr; Back to Browse</a>
+      <div id="storefront-header">
+        <div class="profile-avatar" id="storefront-avatar">?</div>
+        <h2 id="storefront-name">Creator</h2>
+        <p id="storefront-bio" class="profile-bio">No bio yet.</p>
+      </div>
+
+      <h3>Services</h3>
+      <div id="storefront-services"></div>
+
+      <div id="order-form-container" class="hidden">
+        <h3>Place an Order</h3>
+        <div class="order-form">
+          <p id="order-service-name"></p>
+
+          <label for="buyer-name">Your Name</label>
+          <input type="text" id="buyer-name" placeholder="Full name" required>
+
+          <label for="buyer-email">Your Email</label>
+          <input type="email" id="buyer-email" placeholder="email@example.com" required>
+
+          <label for="buyer-details">Request Details</label>
+          <textarea id="buyer-details" rows="3" placeholder="Describe exactly what you want..."></textarea>
+
+          <div id="in-person-fields" class="hidden">
+            <label for="session-date">Preferred Date</label>
+            <input type="date" id="session-date">
+
+            <label for="session-time">Preferred Time</label>
+            <input type="time" id="session-time">
+
+            <label for="session-location">Location</label>
+            <input type="text" id="session-location" placeholder="City or venue">
+          </div>
+
+          <div class="fee-breakdown">
+            <div class="checkout-row">
+              <span>Creator Fee:</span>
+              <span id="order-creator-fee">$0.00</span>
+            </div>
+            <div class="checkout-row">
+              <span>Platform Fee (15%):</span>
+              <span id="order-platform-fee">$0.00</span>
+            </div>
+            <div class="checkout-row">
+              <span>Processing Fee:</span>
+              <span id="order-processing-fee">$0.00</span>
+            </div>
+            <div class="checkout-row checkout-total">
+              <span>Total:</span>
+              <span id="order-total">$0.00</span>
+            </div>
+          </div>
+
+          <button type="button" id="place-order-btn" class="btn-save">Place Order</button>
+          <button type="button" id="cancel-order-btn" class="btn-secondary">Cancel</button>
+          <div id="order-feedback"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

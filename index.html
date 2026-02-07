@@ -1,14 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>18+ Adult Content Request</title>
+<title>Adult Content Marketplace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="css/style.css">
 <script defer src="js/age-gate.js"></script>
-<script defer src="js/form-validation.js"></script>
-<script defer src="js/app.js"></script>
-<script defer src="js/checkout.js"></script>
+<script defer src="js/marketplace.js"></script>
 </head>
 <body>
 <div id="age-gate">
@@ -24,104 +22,29 @@
 
 <div id="main-content" class="hidden">
   <header>
-    <h1>FET Platform</h1>
-    <p>Consent-first adult creator community</p>
+    <h1>Adult Content Marketplace</h1>
+    <p>Browse creators. Order custom content.</p>
     <nav id="main-nav">
       <a href="/" class="active">Home</a>
-      <a href="/profile.html">Profiles</a>
+      <a href="/creators.html">Creators</a>
       <a href="/messaging.html">Messages</a>
     </nav>
   </header>
   <main>
+    <section class="hero">
+      <h2>Find Your Perfect Creator</h2>
+      <p>Browse independent adult content creators, explore their services, and order personalized content directly. Custom videos, photo sets, video calls, and in-person sessions — all in one marketplace.</p>
+      <a href="/creators.html" class="btn-primary">Browse All Creators</a>
+    </section>
 
-  <form id="adultForm">
-    <label>Full Legal Name *</label>
-    <input type="text" required>
-
-    <label>Email Address *</label>
-    <input type="email" required>
-
-    <label>Phone Number *</label>
-    <input type="tel" required>
-
-    <label>Describe Your Request *</label>
-    <textarea required placeholder="Be explicit. Describe exactly what type of adult content you are requesting."></textarea>
-
-    <label>
-      <input type="checkbox" required>
-      I confirm I am 18+, consenting, and understand this involves explicit adult sexual content.
-    </label>
-
-    <button type="submit">Submit Adult Request</button>
-  </form>
-
-  <section id="creator">
-    <h2>Creator Tools</h2>
-
-    <label for="creator-name">Your Name:</label>
-    <input type="text" id="creator-name" placeholder="Creator name"><br/>
-
-    <label for="post-content">Your Post:</label><br/>
-    <textarea id="post-content" rows="4" cols="50" placeholder="Write something..."></textarea><br/>
-
-    <label for="post-media">Add Image/Video (optional):</label>
-    <input type="file" id="post-media" accept="image/*,video/*"><br/><br/>
-
-    <label for="visibility">Visibility:</label>
-    <select id="visibility">
-      <option value="public">Public</option>
-      <option value="followers">Followers Only</option>
-      <option value="private">Private</option>
-    </select><br/><br/>
-
-    <button id="create-post-btn">Create Post</button>
-
-    <div id="creator-feedback" style="margin-top:10px; color: #0f0;"></div>
-  </section>
-
-  <section id="checkout" class="hidden">
-    <h2>Request Summary</h2>
-    <div id="checkout-details">
-      <div class="checkout-row">
-        <span>Creator:</span>
-        <span id="checkout-creator">-</span>
+    <section id="featured-creators">
+      <h2>Featured Creators</h2>
+      <div class="creator-grid" id="creator-grid"></div>
+      <div id="no-creators" class="hidden">
+        <p>No creators have registered yet. Be the first!</p>
+        <a href="/creators.html" class="btn-primary">Register as Creator</a>
       </div>
-      <div class="checkout-row">
-        <span>Content type:</span>
-        <span id="checkout-type">Custom Request</span>
-      </div>
-      <div class="checkout-row">
-        <span>Creator Fee:</span>
-        <span id="checkout-creator-fee">$0.00</span>
-      </div>
-      <div class="checkout-row">
-        <span>Platform Fee (15%):</span>
-        <span id="checkout-platform-fee">$0.00</span>
-      </div>
-      <div class="checkout-row">
-        <span>Processing Fee:</span>
-        <span id="checkout-processing-fee">$0.00</span>
-      </div>
-      <div class="checkout-row checkout-total">
-        <span>Total:</span>
-        <span id="checkout-total">$0.00</span>
-      </div>
-    </div>
-    <button id="pay-btn">Pay Now</button>
-    <button id="cancel-checkout-btn">Cancel</button>
-    <div id="checkout-feedback"></div>
-  </section>
-
-  <section id="feed">
-    <h2>Feed</h2>
-    <label for="filter">Filter Feed:</label>
-    <select id="filter">
-      <option value="all">All</option>
-      <option value="public">Public</option>
-      <option value="followers">Followers Only</option>
-      <option value="private">Private</option>
-    </select>
-  </section>
+    </section>
   </main>
 </div>
 </body>
