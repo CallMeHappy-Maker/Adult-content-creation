@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Messages - Adult Content Marketplace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/chat.css">
+<script defer src="js/age-gate.js"></script>
+<script defer src="js/chat.js"></script>
+</head>
+<body>
+<div id="age-gate">
+  <h1>⚠️ ADULT CONTENT WARNING ⚠️</h1>
+  <p>
+    This website contains <strong>explicit sexual content</strong> intended strictly for adults.
+    By continuing, you confirm that you are <strong>18 years of age or older</strong>,
+    that you consent to viewing sexually explicit material,
+    and that such material is legal in your jurisdiction.
+  </p>
+  <button onclick="acceptAge()">I AM 18+ AND CONSENT</button>
+</div>
+
+<div id="main-content" class="hidden">
+  <header>
+    <h1>Adult Content Marketplace</h1>
+    <p>Messages</p>
+    <nav id="main-nav">
+      <a href="/">Home</a>
+      <a href="/creators.html">Creators</a>
+      <a href="/signup.html">Sign Up</a>
+      <a href="/chat.html" class="active">Messages</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="chat-identity" class="chat-identity-section">
+      <h2>Your Messages</h2>
+      <p class="chat-subtitle">Select your identity to view your conversations.</p>
+      <div class="identity-form">
+        <label for="identity-name">Your Name</label>
+        <input type="text" id="identity-name" placeholder="Enter your name">
+        <label for="identity-role">I am a...</label>
+        <select id="identity-role">
+          <option value="buyer">Buyer</option>
+          <option value="creator">Creator</option>
+        </select>
+        <button id="load-chats-btn" class="btn-primary">View My Messages</button>
+      </div>
+    </section>
+
+    <section id="chat-app" class="hidden">
+      <div class="chat-layout">
+        <div class="chat-sidebar">
+          <div class="sidebar-header">
+            <h3>Conversations</h3>
+            <button id="new-chat-btn" class="btn-new-chat" title="New conversation">+</button>
+          </div>
+          <div id="conversation-list" class="conversation-list"></div>
+          <div id="no-conversations" class="no-conversations">
+            <p>No conversations yet.</p>
+            <p class="hint">Start a chat from a creator's storefront.</p>
+          </div>
+        </div>
+
+        <div class="chat-main">
+          <div id="chat-placeholder" class="chat-placeholder">
+            <p>Select a conversation to start messaging</p>
+          </div>
+
+          <div id="chat-thread" class="hidden">
+            <div class="chat-thread-header">
+              <button id="back-to-list" class="btn-back">←</button>
+              <div class="thread-info">
+                <h4 id="thread-name">Conversation</h4>
+                <span id="thread-role" class="thread-role-badge"></span>
+              </div>
+            </div>
+            <div id="messages-container" class="messages-container"></div>
+            <div id="moderation-warning" class="moderation-warning hidden"></div>
+            <div class="chat-input-area">
+              <textarea id="message-input" placeholder="Type your message..." rows="1" maxlength="2000"></textarea>
+              <button id="send-btn" class="btn-send" disabled>Send</button>
+            </div>
+            <p class="chat-disclaimer">Messages are monitored by AI to ensure platform safety. Sharing contact info or attempting to take business off-platform is prohibited.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="new-chat-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Start a New Conversation</h3>
+        <label for="new-chat-target">Creator Name</label>
+        <input type="text" id="new-chat-target" placeholder="Enter creator name">
+        <div class="modal-actions">
+          <button id="start-chat-btn" class="btn-primary">Start Chat</button>
+          <button id="cancel-chat-btn" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

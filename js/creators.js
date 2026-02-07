@@ -164,6 +164,20 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("storefront-bio").textContent = profile.bio || "No bio yet.";
     document.title = `${profile.name || creatorName} - Adult Content Marketplace`;
 
+    const headerEl = document.getElementById("storefront-header");
+    const msgLink = document.createElement("a");
+    msgLink.href = `/chat.html?creator=${encodeURIComponent(creatorName)}&buyer=`;
+    msgLink.className = "btn-message-creator";
+    msgLink.textContent = "Message This Creator";
+    msgLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      const buyerName = prompt("Enter your name to message this creator:");
+      if (buyerName && buyerName.trim()) {
+        window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}&buyer=${encodeURIComponent(buyerName.trim())}`;
+      }
+    });
+    headerEl.appendChild(msgLink);
+
     const servicesContainer = document.getElementById("storefront-services");
     const services = profile.services || [];
 
