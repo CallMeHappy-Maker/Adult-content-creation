@@ -53,15 +53,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const presetCreator = params.get("creator");
 
-  if (presetCreator) {
-    waitForAuth(3000).then(async (authData) => {
-      if (!authData || !authData.user) {
-        showError("You need to be logged in to use messages. Please log in and try again.");
-        return;
-      }
-      const profile = authData.profile;
-      const displayName = profile && profile.stage_name ? profile.stage_name : (authData.user.first_name || authData.user.email || 'User');
-      const role = profile && profile.account_type === 'creator' ? 'creator' : 'buyer';
+  waitForAuth(3000).then(async (authData) => {
+    if (!authData || !authData.user) {
+      identitySection.classList.add("hidden");
+      chatApp.classList.add("hidden");
+      chatError.classList.remove("hidden");
+      chatErrorMsg.innerHTML = 'You need to sign in to use messages.<br><br><a href="/account.html" class="btn-primary" style="display:inline-block;padding:0.75rem 1.5rem;text-decoration:none;">Sign In</a>';
+      return;
+    }
+
+    const profile = authData.profile;
+    const displayName = profile && profile.stage_name ? profile.stage_name : (authData.user.first_name || authData.user.email || 'User');
+    const role = profile && profile.account_type === 'creator' ? 'creator' : 'buyer';
+
+    if (presetCreator) {
       currentUser = displayName;
       currentRole = role;
       identitySection.classList.add("hidden");
@@ -74,19 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (e) {
         showError("Could not start the conversation. Please try again.");
       }
-    });
-  } else {
-    waitForAuth(3000).then((authData) => {
-      if (authData && authData.user) {
-        const user = authData.user;
-        const profile = authData.profile;
-        const displayName = profile && profile.stage_name ? profile.stage_name : (user.first_name || user.email || 'User');
-        const role = profile && profile.account_type === 'creator' ? 'creator' : 'buyer';
-        document.getElementById("identity-name").value = displayName;
-        document.getElementById("identity-role").value = role;
-      }
-    });
-  }
+    } else {
+      document.getElementById("identity-name").value = displayName;
+      document.getElementById("identity-role").value = role;
+    }
+  });
 
   loadChatsBtn.addEventListener("click", () => {
     if (typeof requireVerified === 'function' && !requireVerified('access messages')) return;

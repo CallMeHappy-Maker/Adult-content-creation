@@ -247,16 +247,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const headerEl = document.getElementById("storefront-header");
-    const msgLink = document.createElement("a");
-    msgLink.href = "#";
-    msgLink.className = "btn-message-creator";
-    msgLink.textContent = "Message This Creator";
-    msgLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (typeof requireVerified === 'function' && !requireVerified('message this creator')) return;
-      window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}`;
-    });
-    headerEl.appendChild(msgLink);
+    const authData = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    if (authData && authData.user) {
+      const msgLink = document.createElement("a");
+      msgLink.href = "#";
+      msgLink.className = "btn-message-creator";
+      msgLink.textContent = "Message This Creator";
+      msgLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (typeof requireVerified === 'function' && !requireVerified('message this creator')) return;
+        window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}`;
+      });
+      headerEl.appendChild(msgLink);
+    } else {
+      const signInTag = document.createElement("a");
+      signInTag.href = "/account.html";
+      signInTag.className = "btn-message-creator btn-signin-chat";
+      signInTag.textContent = "Sign in to chat";
+      signInTag.style.opacity = "0.7";
+      headerEl.appendChild(signInTag);
+    }
 
     const servicesContainer = document.getElementById("storefront-services");
     let services = profile.services || [];
