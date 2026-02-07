@@ -40,7 +40,9 @@ A web-based adult content creator marketplace where creators set up storefronts,
 
 ## Project Architecture
 - `index.html` — Marketplace landing page with hero section and featured creators grid
+- `account.html` — Account page with Log In / Create Account options, Creator vs Client account type choice
 - `signup.html` — Creator sign-up page with DOB age verification and profile setup (stage name, profile pic, bio, specialties)
+- `client-signup.html` — Client sign-up page with display name, location, interests setup
 - `creators.html` — Creator registration form + public storefront with services and ordering
 - `verify.html` — Identity verification page (account type, legal identity, DOB, location, ID upload, bio, specialties)
 - `chat.html` — Moderated messaging console with AI moderation
@@ -50,6 +52,7 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - `js/auth.js` — Client-side auth utilities (initAuth, getCurrentUser, requireAuth, requireVerified, updateNavAuth, checkAdminStatus)
 - `js/verify.js` — Verification page logic (form validation, ID upload, profile submission, Stripe Connect setup)
 - `js/admin.js` — Admin dashboard logic (stats, user management, message overview, user removal)
+- `js/client-signup.js` — Client sign-up logic (display name, location, bio, interests, profile save)
 - `js/signup.js` — Creator sign-up logic (DOB verification, profile pic upload, specialties, localStorage save)
 - `js/marketplace.js` — Landing page logic (loads creator cards from localStorage)
 - `js/creators.js` — Creator registration, storefront rendering, ordering with fee calculation
@@ -120,6 +123,10 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - `node server.js` — starts the app on port 5000
 
 ## Recent Changes
+- 2026-02-07: Added account page (account.html) with Log In / Create Account flow, Creator vs Client choice
+- 2026-02-07: Added client sign-up page (client-signup.html) for buyer profile setup
+- 2026-02-07: Updated login flow to support redirect after auth and account type storage in session
+- 2026-02-07: Removed Sign Up from main nav, replaced with Login/Sign Up button linking to account page
 - 2026-02-07: Added access control — messaging, ordering require verified accounts (client + server-side)
 - 2026-02-07: Added Stripe Connect onboarding for creators on verify page with status display
 - 2026-02-07: Integrated Stripe payments: checkout sessions, Connect payouts, webhook handling

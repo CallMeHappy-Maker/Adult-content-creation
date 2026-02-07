@@ -25,7 +25,7 @@ function isLoggedIn() {
 
 function requireAuth() {
   if (!isLoggedIn()) {
-    window.location.href = '/api/login';
+    window.location.href = '/account.html';
     return false;
   }
   return true;
@@ -58,7 +58,7 @@ function showAuthGate(message) {
   overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;';
 
   const isAuthenticated = isLoggedIn();
-  const buttonHref = isAuthenticated ? '/verify.html' : '/api/login';
+  const buttonHref = isAuthenticated ? '/verify.html' : '/account.html';
   const buttonText = isAuthenticated ? 'Complete Verification' : 'Log In';
 
   overlay.innerHTML = `
@@ -130,7 +130,7 @@ function updateNavAuth(data) {
     `;
   } else {
     authNav.innerHTML = `
-      <a href="/api/login" class="auth-nav-login">Log In</a>
+      <a href="/account.html" class="auth-nav-login">Login / Sign Up</a>
     `;
   }
 }

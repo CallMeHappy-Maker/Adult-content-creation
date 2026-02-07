@@ -109,7 +109,16 @@ async function setupAuth() {
   passport.use(strategy);
 }
 
+const ALLOWED_REDIRECTS = ['/', '/signup.html', '/client-signup.html', '/verify.html', '/creators.html', '/chat.html', '/admin.html'];
+const ALLOWED_ACCOUNT_TYPES = ['creator', 'buyer'];
+
 app.get('/api/login', (req, res, next) => {
+  if (req.query.redirect && ALLOWED_REDIRECTS.includes(req.query.redirect)) {
+    req.session.loginRedirect = req.query.redirect;
+  }
+  if (req.query.account_type && ALLOWED_ACCOUNT_TYPES.includes(req.query.account_type)) {
+    req.session.accountType = req.query.account_type;
+  }
   passport.authenticate('openid-client', {
     prompt: 'login consent',
   })(req, res, next);
@@ -120,6 +129,7 @@ app.get('/api/callback',
   async (req, res) => {
     try {
       const user = req.user;
+      const accountType = req.session.accountType || null;
       await pool.query(
         `INSERT INTO users (id, email, first_name, last_name, profile_image_url, updated_at)
          VALUES ($1, $2, $3, $4, $5, NOW())
@@ -131,10 +141,25 @@ app.get('/api/callback',
            updated_at = NOW()`,
         [user.id, user.email, user.first_name, user.last_name, user.profile_image_url]
       );
+
+      if (accountType) {
+        await pool.query(
+          `INSERT INTO profiles (user_id, account_type, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (user_id) DO UPDATE SET
+             account_type = COALESCE(profiles.account_type, EXCLUDED.account_type),
+             updated_at = NOW()`,
+          [user.id, accountType]
+        );
+      }
     } catch (error) {
       console.error('Error upserting user:', error);
     }
-    res.redirect('/');
+
+    const redirect = req.session.loginRedirect || '/';
+    delete req.session.loginRedirect;
+    delete req.session.accountType;
+    res.redirect(redirect);
   }
 );
 

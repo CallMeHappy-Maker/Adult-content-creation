@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Client Setup - Adult Content Marketplace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<script defer src="js/auth.js"></script>
+<script defer src="js/client-signup.js"></script>
+</head>
+<body>
+
+<div id="main-content">
+  <header>
+    <h1>Adult Content Marketplace</h1>
+    <p>Client Setup</p>
+    <nav id="main-nav">
+      <a href="/">Home</a>
+      <a href="/creators.html">Creators</a>
+      <div id="auth-nav"></div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="client-signup-section">
+      <h2>Set Up Your Client Profile</h2>
+      <p class="signup-intro">Complete your profile to start browsing and ordering from creators.</p>
+
+      <div class="signup-form">
+        <label for="client-display-name">Display Name</label>
+        <input type="text" id="client-display-name" placeholder="How creators will see you" required>
+        <p class="field-hint">This is your public display name. Your real identity stays private.</p>
+
+        <label for="client-location">Location (optional)</label>
+        <input type="text" id="client-location" placeholder="City, State or Country">
+        <p class="field-hint">Helps match you with nearby creators for in-person sessions.</p>
+
+        <label for="client-bio">About You (optional)</label>
+        <textarea id="client-bio" rows="3" placeholder="Tell creators a bit about what you're looking for..."></textarea>
+
+        <div class="client-interests-section">
+          <h3>What are you interested in?</h3>
+          <p class="field-hint">Select all that apply:</p>
+          <div class="specialties-grid">
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="interest" value="custom-video">
+              <span class="specialty-card">
+                <span class="specialty-icon">&#127916;</span>
+                <span class="specialty-name">Custom Videos</span>
+              </span>
+            </label>
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="interest" value="custom-photos">
+              <span class="specialty-card">
+                <span class="specialty-icon">&#128248;</span>
+                <span class="specialty-name">Custom Photos</span>
+              </span>
+            </label>
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="interest" value="in-person">
+              <span class="specialty-card">
+                <span class="specialty-icon">&#129309;</span>
+                <span class="specialty-name">In-Person Sessions</span>
+              </span>
+            </label>
+            <label class="specialty-checkbox">
+              <input type="checkbox" name="interest" value="video-call">
+              <span class="specialty-card">
+                <span class="specialty-icon">&#128249;</span>
+                <span class="specialty-name">Video Calls</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <button type="button" id="save-client-btn" class="btn-save">Complete Setup</button>
+        <div id="client-signup-feedback"></div>
+      </div>
+
+      <div id="client-signup-success" class="hidden">
+        <div class="success-box">
+          <h3>You're All Set!</h3>
+          <p>Your client profile is ready. Start browsing creators and ordering content.</p>
+          <a href="/creators.html" class="btn-primary">Browse Creators</a>
+          <a href="/verify.html" class="btn-secondary" style="display:inline-block; margin-top:0.5rem; text-align:center; text-decoration:none;">Complete Identity Verification</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

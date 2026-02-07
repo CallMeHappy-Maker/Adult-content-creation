@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Account - Adult Content Marketplace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="account-page">
+  <div class="account-container">
+    <a href="/" class="account-back">&larr; Back to Marketplace</a>
+    <h1 class="account-title">Welcome</h1>
+    <p class="account-subtitle">Log in to your existing account or create a new one to get started.</p>
+
+    <div id="account-options" class="account-options">
+      <a href="/api/login" class="account-card account-card-login">
+        <span class="account-card-icon">&#128274;</span>
+        <span class="account-card-label">Log In</span>
+        <span class="account-card-desc">I already have an account</span>
+      </a>
+
+      <button type="button" id="create-account-btn" class="account-card account-card-create" onclick="showAccountTypeChoice()">
+        <span class="account-card-icon">&#10133;</span>
+        <span class="account-card-label">Create Account</span>
+        <span class="account-card-desc">I'm new here</span>
+      </button>
+    </div>
+
+    <div id="account-type-choice" class="account-type-choice hidden">
+      <h2 class="account-type-title">What brings you here?</h2>
+      <p class="account-type-subtitle">Choose how you want to use the marketplace.</p>
+
+      <div class="account-type-cards">
+        <a href="/api/login?account_type=creator&redirect=/signup.html" class="account-type-card account-type-creator">
+          <span class="account-type-icon">&#127908;</span>
+          <span class="account-type-name">Content Creator</span>
+          <span class="account-type-desc">I want to sell custom content, set up a storefront, and connect with clients.</span>
+        </a>
+
+        <a href="/api/login?account_type=buyer&redirect=/client-signup.html" class="account-type-card account-type-client">
+          <span class="account-type-icon">&#128188;</span>
+          <span class="account-type-name">Client</span>
+          <span class="account-type-desc">I want to browse creators, order custom content, and book sessions.</span>
+        </a>
+      </div>
+
+      <button type="button" class="account-back-btn" onclick="showMainOptions()">
+        &larr; Back
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showAccountTypeChoice() {
+  document.getElementById('account-options').classList.add('hidden');
+  document.getElementById('account-type-choice').classList.remove('hidden');
+}
+
+function showMainOptions() {
+  document.getElementById('account-type-choice').classList.add('hidden');
+  document.getElementById('account-options').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
