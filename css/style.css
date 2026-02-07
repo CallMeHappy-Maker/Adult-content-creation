@@ -78,6 +78,12 @@ select {
   border-left: 4px solid #0ff;
 }
 
+img, video {
+  margin-top: 0.5rem;
+  max-width: 100%;
+  border-radius: 6px;
+}
+
 .post strong {
   color: #0ff;
   display: block;
