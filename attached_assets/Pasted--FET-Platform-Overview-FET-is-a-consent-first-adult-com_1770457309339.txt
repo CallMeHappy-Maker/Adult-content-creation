@@ -1,0 +1,76 @@
+# FET Platform
+
+## Overview
+FET is a **consent-first adult community and creator platform** designed for fetish-positive spaces that prioritize safety, autonomy, and compliance — without killing creativity or community.
+
+This project started as a proof of concept and is being built incrementally with a **mobile-first mindset**, currently developed and tested inside Replit.
+
+---
+
+## Core Philosophy
+- **Consent-first**: Visibility, interaction, and access are intentional.
+- **Creator-first**: Creators control how, when, and where content appears.
+- **Adult-positive**: Fetish-friendly without becoming a low-effort content dump.
+- **Safety-aware**: Moderation and compliance are built-in, not bolted on later.
+- **Scalable by design**: What starts simple can grow into a full platform.
+
+---
+
+## Target Audience
+- Adult creators
+- Fetish communities
+- Sex-positive users
+- Moderators and admins managing adult spaces
+- Mobile-first users (Android/iOS)
+
+---
+
+## Planned Platform Modules
+
+### 1. Community Feed
+- User-generated posts
+- Media support (images/video later)
+- Consent-aware visibility rules
+- Filters by interest, tag, or boundary
+
+### 2. Creator Tools
+- Create/edit/delete posts
+- Visibility controls (public, followers, gated)
+- Consent flags and disclaimers
+- Future monetization hooks (not implemented yet)
+
+### 3. Consent & Age Gating
+- Age verification gate (18+)
+- Explicit consent acknowledgement
+- Persistent consent state per session
+- Required before viewing adult content
+
+### 4. Admin & Moderation
+- Post review tools
+- User flagging system
+- Content takedown workflow
+- Audit-friendly moderation logs
+
+### 5. Compliance Awareness
+Planned with future support for:
+- 18 U.S.C. § 2257 record-keeping concepts
+- Content ownership attribution
+- Takedown and reporting processes
+- Jurisdiction-aware expansion (later phase)
+
+> Note: Full legal compliance is a **later implementation phase**, but architectural decisions already account for it.
+
+---
+
+## Current Project State
+
+### Environment
+- **Platform**: Replit
+- **Primary device**: Android (mobile-first development)
+- **Stack (current)**:
+  - HTML
+  - CSS
+  - Vanilla JavaScript
+- Backend will be added later (Node / API / DB)
+
+### Folder Structure
