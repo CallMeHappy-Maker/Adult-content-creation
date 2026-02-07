@@ -63,7 +63,7 @@ function showAuthGate(message) {
 
   overlay.innerHTML = `
     <div style="background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:2rem;max-width:400px;width:90%;text-align:center;">
-      <h3 style="color:#0ff;margin:0 0 1rem;">${escapeHtmlAuth(message)}</h3>
+      <h3 style="color:#CC0033;margin:0 0 1rem;">${escapeHtmlAuth(message)}</h3>
       <p style="color:#aaa;font-size:0.9rem;margin-bottom:1.5rem;">
         ${isAuthenticated ? 'You need to verify your identity before you can access this feature.' : 'Please log in to access this feature.'}
       </p>

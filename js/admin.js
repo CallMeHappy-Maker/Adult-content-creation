@@ -33,12 +33,12 @@ async function loadStats() {
     const grid = document.getElementById("stats-grid");
 
     const items = [
-      { label: "Total Users", value: stats.totalUsers, color: "#0ff" },
+      { label: "Total Users", value: stats.totalUsers, color: "#CC0033" },
       { label: "Verified", value: stats.verifiedUsers, color: "#0f0" },
       { label: "Creators", value: stats.creators, color: "#f0f" },
       { label: "Buyers", value: stats.buyers, color: "#ff0" },
-      { label: "Conversations", value: stats.totalConversations, color: "#0ff" },
-      { label: "Messages", value: stats.totalMessages, color: "#0ff" },
+      { label: "Conversations", value: stats.totalConversations, color: "#CC0033" },
+      { label: "Messages", value: stats.totalMessages, color: "#CC0033" },
       { label: "Stripe Connected", value: stats.stripeConnected, color: "#0f0" },
     ];
 

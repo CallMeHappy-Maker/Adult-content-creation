@@ -173,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Submitting...";
-    showFeedback("Uploading ID document...", "#0ff");
+    showFeedback("Uploading ID document...", "#CC0033");
 
     try {
       const idRes = await fetch('/api/profile/upload-id', {
@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(err.error || 'Failed to upload ID');
       }
 
-      showFeedback("Saving profile...", "#0ff");
+      showFeedback("Saving profile...", "#CC0033");
 
       const dobStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
