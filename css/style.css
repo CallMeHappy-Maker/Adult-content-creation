@@ -237,6 +237,207 @@ main {
   margin-bottom: 1rem;
 }
 
+#creator-directory {
+  max-width: 900px;
+  margin: 1rem auto;
+  padding: 0 1rem;
+}
+
+#creator-directory h2 {
+  color: #0ff;
+  margin-bottom: 1rem;
+}
+
+.search-controls {
+  margin-bottom: 1.5rem;
+}
+
+.search-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.search-field input,
+.search-field select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #eee;
+  font-size: 0.9rem;
+}
+
+.search-field-name {
+  flex: 2;
+  min-width: 150px;
+}
+
+.search-field-zip {
+  flex: 1;
+  min-width: 100px;
+}
+
+.search-field-radius {
+  flex: 1;
+  min-width: 100px;
+}
+
+.search-field input:focus,
+.search-field select:focus {
+  outline: none;
+  border-color: #0ff;
+}
+
+.btn-search {
+  padding: 0.6rem 1.25rem;
+  background: #8B0000;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-search:hover {
+  background: #a00;
+}
+
+.creators-loading {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+}
+
+.creators-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.creator-directory-card {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #eee;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.creator-directory-card:hover {
+  border-color: #0ff;
+  transform: translateY(-2px);
+}
+
+.creator-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #8B0000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.creator-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.creator-thumb-initial {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.creator-card-name {
+  margin: 0 0 0.2rem;
+  color: #0ff;
+  font-size: 1rem;
+}
+
+.creator-card-location {
+  margin: 0 0 0.3rem;
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.creator-card-bio {
+  margin: 0 0 0.4rem;
+  color: #aaa;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.creator-card-specialties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.creator-specialty-tag {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  background: #2a2a2a;
+  color: #0ff;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  border: 1px solid #333;
+}
+
+.no-results-text {
+  text-align: center;
+  color: #888;
+  padding: 2rem;
+  font-size: 1rem;
+}
+
+.storefront-profile-pic {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #8B0000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  overflow: hidden;
+  font-size: 2rem;
+  color: #fff;
+  font-weight: bold;
+}
+
+.storefront-profile-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.storefront-location {
+  color: #999;
+  font-size: 0.85rem;
+  margin: 0.25rem 0;
+}
+
+.storefront-specialties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
 #profile-header, #storefront-header {
   max-width: 600px;
   margin: 1rem auto;

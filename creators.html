@@ -33,54 +33,53 @@
   </header>
 
   <main>
-    <section id="creator-setup" class="hidden">
-      <h2>Register as a Creator</h2>
-      <div class="setup-form">
-        <label for="creator-name">Creator Name</label>
-        <input type="text" id="creator-name" placeholder="Your display name" required>
+    <section id="creator-directory">
+      <h2>Find Creators</h2>
 
-        <label for="creator-bio">Bio</label>
-        <textarea id="creator-bio" rows="3" placeholder="Tell buyers about yourself..."></textarea>
-
-        <h3>Your Services</h3>
-        <div id="services-list"></div>
-
-        <div class="add-service-form" id="add-service-form">
-          <h4>Add a Service</h4>
-          <label for="service-type">Service Type</label>
-          <select id="service-type">
-            <option value="custom-video">Custom Video</option>
-            <option value="custom-photos">Custom Photos</option>
-            <option value="in-person">In-Person Session</option>
-            <option value="video-call">Video Call</option>
-          </select>
-
-          <label for="service-title">Title</label>
-          <input type="text" id="service-title" placeholder="e.g. Personalized Video Message">
-
-          <label for="service-description">Description</label>
-          <textarea id="service-description" rows="2" placeholder="Describe what the buyer gets..."></textarea>
-
-          <label for="service-price">Price ($)</label>
-          <input type="number" id="service-price" min="1" step="0.01" placeholder="25.00">
-
-          <button type="button" id="add-service-btn" class="btn-primary">Add Service</button>
+      <div class="search-controls">
+        <div class="search-row">
+          <div class="search-field search-field-name">
+            <input type="text" id="search-name" placeholder="Search by name...">
+          </div>
+          <div class="search-field search-field-zip">
+            <input type="text" id="search-zip" placeholder="Zip code" maxlength="10">
+          </div>
+          <div class="search-field search-field-radius">
+            <select id="search-radius">
+              <option value="">Radius</option>
+              <option value="5">5 miles</option>
+              <option value="10">10 miles</option>
+              <option value="25">25 miles</option>
+              <option value="50">50 miles</option>
+              <option value="100">100 miles</option>
+            </select>
+          </div>
+          <button type="button" id="search-btn" class="btn-search">Search</button>
         </div>
+      </div>
 
-        <button type="button" id="save-profile-btn" class="btn-save">Save Profile & Services</button>
-        <div id="setup-feedback"></div>
-        <div id="storefront-link" class="hidden">
-          <a href="#" id="view-storefront-link" class="btn-primary">View Your Storefront</a>
-        </div>
+      <div id="creators-loading" class="creators-loading">
+        <p>Loading creators...</p>
+      </div>
+
+      <div id="creators-grid" class="creators-directory-grid"></div>
+
+      <div id="no-creators" class="hidden">
+        <p class="no-results-text">No creators found. Try a different search or check back later.</p>
       </div>
     </section>
 
     <section id="storefront" class="hidden">
-      <a href="/" class="back-link">&larr; Back to Browse</a>
+      <a href="/creators.html" class="back-link">&larr; Back to All Creators</a>
       <div id="storefront-header">
-        <div class="profile-avatar" id="storefront-avatar">?</div>
+        <div class="storefront-profile-pic" id="storefront-avatar">
+          <span id="storefront-avatar-initial">?</span>
+          <img id="storefront-avatar-img" class="hidden" alt="Creator profile">
+        </div>
         <h2 id="storefront-name">Creator</h2>
+        <p id="storefront-location" class="storefront-location"></p>
         <p id="storefront-bio" class="profile-bio">No bio yet.</p>
+        <div id="storefront-specialties" class="storefront-specialties"></div>
       </div>
 
       <h3>Services</h3>

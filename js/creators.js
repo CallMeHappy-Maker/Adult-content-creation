@@ -20,6 +20,12 @@ document.addEventListener("DOMContentLoaded", () => {
     "video-call": "📹"
   };
 
+  function esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
   function formatCurrency(amount) {
     return "$" + amount.toFixed(2);
   }
@@ -36,137 +42,213 @@ document.addEventListener("DOMContentLoaded", () => {
     return JSON.parse(localStorage.getItem("creatorProfiles") || "{}");
   }
 
-  function saveProfiles(profiles) {
-    localStorage.setItem("creatorProfiles", JSON.stringify(profiles));
-  }
-
   if (creatorParam) {
+    document.getElementById("creator-directory").classList.add("hidden");
     renderStorefront(creatorParam);
   } else {
-    renderSetupForm();
+    loadCreatorDirectory();
   }
 
-  function renderSetupForm() {
-    const setupSection = document.getElementById("creator-setup");
-    setupSection.classList.remove("hidden");
+  function setupSearch() {
+    const searchBtn = document.getElementById("search-btn");
+    const searchName = document.getElementById("search-name");
 
-    const pendingServices = [];
-    const servicesList = document.getElementById("services-list");
-    const addServiceBtn = document.getElementById("add-service-btn");
-    const saveProfileBtn = document.getElementById("save-profile-btn");
-    const setupFeedback = document.getElementById("setup-feedback");
-    const storefrontLinkDiv = document.getElementById("storefront-link");
-    const viewStorefrontLink = document.getElementById("view-storefront-link");
+    searchBtn.addEventListener("click", () => loadCreatorDirectory());
 
-    function renderPendingServices() {
-      servicesList.innerHTML = "";
-      if (pendingServices.length === 0) {
-        servicesList.innerHTML = '<p style="color:#888;">No services added yet. Add at least one service below.</p>';
+    searchName.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") loadCreatorDirectory();
+    });
+  }
+
+  async function loadCreatorDirectory() {
+    const grid = document.getElementById("creators-grid");
+    const loading = document.getElementById("creators-loading");
+    const noCreators = document.getElementById("no-creators");
+
+    loading.classList.remove("hidden");
+    grid.innerHTML = "";
+    noCreators.classList.add("hidden");
+
+    const search = document.getElementById("search-name").value.trim();
+    const zip = document.getElementById("search-zip").value.trim();
+    const radius = document.getElementById("search-radius").value;
+
+    let url = "/api/creators?";
+    if (search) url += "search=" + encodeURIComponent(search) + "&";
+    if (zip) url += "zip_code=" + encodeURIComponent(zip) + "&";
+    if (radius) url += "radius=" + encodeURIComponent(radius) + "&";
+
+    try {
+      const res = await fetch(url);
+      const creators = await res.json();
+
+      loading.classList.add("hidden");
+
+      const localProfiles = getProfiles();
+      const localCreators = Object.values(localProfiles).filter(p => {
+        if (!search) return true;
+        return p.name && p.name.toLowerCase().includes(search.toLowerCase());
+      });
+
+      const allCreators = [...creators];
+
+      localCreators.forEach(lc => {
+        const exists = allCreators.some(c =>
+          (c.stage_name || '').toLowerCase() === (lc.name || '').toLowerCase()
+        );
+        if (!exists) {
+          allCreators.push({
+            stage_name: lc.name,
+            bio: lc.bio,
+            city: null,
+            state_province: null,
+            profile_image_url: null,
+            specialties: null,
+            _local: true
+          });
+        }
+      });
+
+      if (allCreators.length === 0) {
+        noCreators.classList.remove("hidden");
         return;
       }
-      pendingServices.forEach((svc, idx) => {
-        const el = document.createElement("div");
-        el.className = "service-card";
-        el.innerHTML = `
-          <div class="service-card-header">
-            <span class="service-type-badge">${serviceTypeIcons[svc.type] || ""} ${serviceTypeLabels[svc.type] || svc.type}</span>
-            <button class="btn-remove" data-idx="${idx}">&times;</button>
-          </div>
-          <h4>${svc.title}</h4>
-          <p>${svc.description}</p>
-          <span class="service-price">${formatCurrency(svc.price)}</span>
-        `;
-        servicesList.appendChild(el);
-      });
 
-      servicesList.querySelectorAll(".btn-remove").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const idx = parseInt(btn.getAttribute("data-idx"));
-          pendingServices.splice(idx, 1);
-          renderPendingServices();
-        });
+      allCreators.forEach(creator => {
+        const card = document.createElement("a");
+        card.className = "creator-directory-card";
+        card.href = `/creators.html?creator=${encodeURIComponent(creator.stage_name || creator.display_name || 'Unknown')}`;
+
+        const name = creator.stage_name || creator.display_name || "Unknown Creator";
+        const location = [creator.city, creator.state_province].filter(Boolean).join(", ");
+
+        let thumbHtml;
+        if (creator.profile_image_url) {
+          thumbHtml = `<img src="${esc(creator.profile_image_url)}" alt="${esc(name)}" class="creator-thumb-img">`;
+        } else {
+          const initial = name.charAt(0).toUpperCase();
+          thumbHtml = `<span class="creator-thumb-initial">${initial}</span>`;
+        }
+
+        const specialtiesHtml = (creator.specialties || []).map(s =>
+          `<span class="creator-specialty-tag">${esc(serviceTypeLabels[s] || s)}</span>`
+        ).join('');
+
+        card.innerHTML = `
+          <div class="creator-thumb">${thumbHtml}</div>
+          <div class="creator-card-info">
+            <h3 class="creator-card-name">${esc(name)}</h3>
+            ${location ? `<p class="creator-card-location">${esc(location)}</p>` : ''}
+            ${creator.bio ? `<p class="creator-card-bio">${esc((creator.bio || '').substring(0, 100))}${(creator.bio || '').length > 100 ? '...' : ''}</p>` : ''}
+            ${specialtiesHtml ? `<div class="creator-card-specialties">${specialtiesHtml}</div>` : ''}
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    } catch (err) {
+      loading.classList.add("hidden");
+      console.error("Failed to load creators:", err);
+
+      const localProfiles = getProfiles();
+      const localCreators = Object.values(localProfiles);
+
+      if (localCreators.length === 0) {
+        noCreators.classList.remove("hidden");
+        return;
+      }
+
+      localCreators.forEach(lc => {
+        const card = document.createElement("a");
+        card.className = "creator-directory-card";
+        card.href = `/creators.html?creator=${encodeURIComponent(lc.name)}`;
+        const initial = (lc.name || '?').charAt(0).toUpperCase();
+        card.innerHTML = `
+          <div class="creator-thumb"><span class="creator-thumb-initial">${initial}</span></div>
+          <div class="creator-card-info">
+            <h3 class="creator-card-name">${esc(lc.name)}</h3>
+            ${lc.bio ? `<p class="creator-card-bio">${esc(lc.bio.substring(0, 100))}</p>` : ''}
+          </div>
+        `;
+        grid.appendChild(card);
       });
     }
-
-    renderPendingServices();
-
-    addServiceBtn.addEventListener("click", () => {
-      const type = document.getElementById("service-type").value;
-      const title = document.getElementById("service-title").value.trim();
-      const description = document.getElementById("service-description").value.trim();
-      const price = parseFloat(document.getElementById("service-price").value);
-
-      if (!title) { setupFeedback.textContent = "Service title is required."; setupFeedback.style.color = "#f55"; return; }
-      if (!description) { setupFeedback.textContent = "Service description is required."; setupFeedback.style.color = "#f55"; return; }
-      if (isNaN(price) || price <= 0) { setupFeedback.textContent = "Enter a valid price."; setupFeedback.style.color = "#f55"; return; }
-
-      pendingServices.push({
-        id: "svc_" + Date.now(),
-        type,
-        title,
-        description,
-        price
-      });
-
-      document.getElementById("service-title").value = "";
-      document.getElementById("service-description").value = "";
-      document.getElementById("service-price").value = "";
-      setupFeedback.textContent = "";
-
-      renderPendingServices();
-    });
-
-    saveProfileBtn.addEventListener("click", () => {
-      const name = document.getElementById("creator-name").value.trim();
-      const bio = document.getElementById("creator-bio").value.trim();
-
-      if (!name) { setupFeedback.textContent = "Creator name is required."; setupFeedback.style.color = "#f55"; return; }
-      if (pendingServices.length === 0) { setupFeedback.textContent = "Add at least one service."; setupFeedback.style.color = "#f55"; return; }
-
-      const profiles = getProfiles();
-      profiles[name] = {
-        name,
-        bio,
-        services: pendingServices
-      };
-      saveProfiles(profiles);
-
-      setupFeedback.textContent = "Profile saved successfully!";
-      setupFeedback.style.color = "#0f0";
-
-      viewStorefrontLink.href = `/creators.html?creator=${encodeURIComponent(name)}`;
-      storefrontLinkDiv.classList.remove("hidden");
-    });
   }
 
-  function renderStorefront(creatorName) {
+  setupSearch();
+
+  async function renderStorefront(creatorName) {
     const profiles = getProfiles();
-    const profile = profiles[creatorName];
+    let profile = profiles[creatorName];
+    let dbCreator = null;
+
+    if (!profile) {
+      try {
+        const res = await fetch(`/api/creators/${encodeURIComponent(creatorName)}`);
+        if (res.ok) {
+          dbCreator = await res.json();
+          profile = {
+            name: dbCreator.stage_name || dbCreator.display_name || creatorName,
+            bio: dbCreator.bio,
+            services: [],
+            _db: true,
+            profile_image_url: dbCreator.profile_image_url,
+            city: dbCreator.city,
+            state_province: dbCreator.state_province,
+            specialties: dbCreator.specialties
+          };
+        }
+      } catch (e) {
+        console.error("Failed to fetch creator from DB:", e);
+      }
+    }
 
     const storefrontSection = document.getElementById("storefront");
     storefrontSection.classList.remove("hidden");
 
     if (!profile) {
       storefrontSection.innerHTML = `
-        <a href="/" class="back-link">&larr; Back to Browse</a>
+        <a href="/creators.html" class="back-link">&larr; Back to All Creators</a>
         <div style="text-align:center; padding:2rem;">
           <h2>Creator Not Found</h2>
-          <p>This creator profile doesn't exist.</p>
-          <a href="/" class="btn-primary">Browse Creators</a>
+          <p>This creator profile doesn't exist yet.</p>
+          <a href="/creators.html" class="btn-primary">Browse Creators</a>
         </div>
       `;
       return;
     }
 
+    const avatarInitial = document.getElementById("storefront-avatar-initial");
+    const avatarImg = document.getElementById("storefront-avatar-img");
     const initial = creatorName.charAt(0).toUpperCase();
-    document.getElementById("storefront-avatar").textContent = initial;
+
+    if (profile.profile_image_url) {
+      avatarInitial.classList.add("hidden");
+      avatarImg.src = profile.profile_image_url;
+      avatarImg.classList.remove("hidden");
+    } else {
+      avatarInitial.textContent = initial;
+    }
+
     document.getElementById("storefront-name").textContent = profile.name || creatorName;
     document.getElementById("storefront-bio").textContent = profile.bio || "No bio yet.";
     document.title = `${profile.name || creatorName} - Adult Content Marketplace`;
 
+    const locationParts = [profile.city, profile.state_province].filter(Boolean);
+    if (locationParts.length > 0) {
+      document.getElementById("storefront-location").textContent = locationParts.join(", ");
+    }
+
+    if (profile.specialties && profile.specialties.length > 0) {
+      const specEl = document.getElementById("storefront-specialties");
+      specEl.innerHTML = profile.specialties.map(s =>
+        `<span class="creator-specialty-tag">${esc(serviceTypeLabels[s] || s)}</span>`
+      ).join('');
+    }
+
     const headerEl = document.getElementById("storefront-header");
     const msgLink = document.createElement("a");
-    msgLink.href = `/chat.html?creator=${encodeURIComponent(creatorName)}&buyer=`;
+    msgLink.href = "#";
     msgLink.className = "btn-message-creator";
     msgLink.textContent = "Message This Creator";
     msgLink.addEventListener("click", (e) => {
@@ -175,8 +257,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const authData = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
       if (authData && authData.user) {
-        const profile = authData.profile;
-        const buyerName = profile && profile.stage_name ? profile.stage_name : (authData.user.first_name || authData.user.email || 'User');
+        const prof = authData.profile;
+        const buyerName = prof && prof.stage_name ? prof.stage_name : (authData.user.first_name || authData.user.email || 'User');
         window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}&buyer=${encodeURIComponent(buyerName)}`;
       } else {
         const buyerName = prompt("Enter your name to message this creator:");
@@ -202,8 +284,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="service-card-header">
           <span class="service-type-badge">${serviceTypeIcons[svc.type] || ""} ${serviceTypeLabels[svc.type] || svc.type}</span>
         </div>
-        <h4>${svc.title}</h4>
-        <p>${svc.description}</p>
+        <h4>${esc(svc.title)}</h4>
+        <p>${esc(svc.description)}</p>
         <span class="service-price">${formatCurrency(svc.price)}</span>
         <button class="btn-order" data-idx="${idx}">Order</button>
       `;

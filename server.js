@@ -195,8 +195,8 @@ app.get('/api/auth/user', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT u.*, 
-        up.id as profile_id, up.account_type, up.stage_name, up.legal_first_name, up.legal_last_name,
-        up.date_of_birth, up.city, up.state_province, up.country, up.id_document_type,
+        up.id as profile_id, up.account_type, up.stage_name, up.display_name, up.legal_first_name, up.legal_last_name,
+        up.date_of_birth, up.city, up.state_province, up.country, up.zip_code, up.id_document_type,
         up.id_verified, up.verification_status, up.stripe_customer_id, up.stripe_connect_account_id,
         up.stripe_onboarding_complete, up.bio, up.specialties,
         up.created_at as profile_created_at, up.updated_at as profile_updated_at
@@ -228,12 +228,14 @@ app.get('/api/auth/user', async (req, res) => {
         user_id: row.id,
         account_type: row.account_type,
         stage_name: row.stage_name,
+        display_name: row.display_name,
         legal_first_name: row.legal_first_name,
         legal_last_name: row.legal_last_name,
         date_of_birth: row.date_of_birth,
         city: row.city,
         state_province: row.state_province,
         country: row.country,
+        zip_code: row.zip_code,
         id_document_type: row.id_document_type,
         id_verified: row.id_verified,
         verification_status: row.verification_status,
@@ -383,6 +385,59 @@ app.get('/api/admin/check', isAuthenticated, isAdmin, (req, res) => {
   res.json({ isAdmin: true });
 });
 
+app.get('/api/creators', async (req, res) => {
+  try {
+    const { search, zip_code, radius } = req.query;
+    let query = `
+      SELECT up.stage_name, up.display_name, up.bio, up.city, up.state_province,
+             up.zip_code, up.specialties, u.profile_image_url
+      FROM user_profiles up
+      JOIN users u ON u.id = up.user_id
+      WHERE up.account_type = 'creator'
+        AND up.verification_status IN ('submitted', 'verified')
+    `;
+    const params = [];
+
+    if (search && search.trim()) {
+      params.push('%' + search.trim().toLowerCase() + '%');
+      query += ` AND (LOWER(up.stage_name) LIKE $${params.length} OR LOWER(up.display_name) LIKE $${params.length})`;
+    }
+
+    if (zip_code && zip_code.trim()) {
+      params.push(zip_code.trim());
+      query += ` AND up.zip_code = $${params.length}`;
+    }
+
+    query += ' ORDER BY up.created_at DESC';
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching creators:', error);
+    res.status(500).json({ error: 'Failed to fetch creators' });
+  }
+});
+
+app.get('/api/creators/:name', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT up.stage_name, up.display_name, up.bio, up.city, up.state_province,
+              up.zip_code, up.specialties, u.profile_image_url
+       FROM user_profiles up
+       JOIN users u ON u.id = up.user_id
+       WHERE up.stage_name = $1 AND up.account_type = 'creator'`,
+      [req.params.name]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Creator not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching creator:', error);
+    res.status(500).json({ error: 'Failed to fetch creator' });
+  }
+});
+
 app.get('/api/profile', isAuthenticated, async (req, res) => {
   try {
     const result = await pool.query(
@@ -399,8 +454,8 @@ app.get('/api/profile', isAuthenticated, async (req, res) => {
 app.post('/api/profile', isAuthenticated, async (req, res) => {
   try {
     const {
-      account_type, stage_name, legal_first_name, legal_last_name,
-      date_of_birth, city, state_province, country, bio, specialties
+      account_type, stage_name, display_name, legal_first_name, legal_last_name,
+      date_of_birth, city, state_province, country, zip_code, bio, specialties
     } = req.body;
 
     const existing = await pool.query(
@@ -422,20 +477,23 @@ app.post('/api/profile', isAuthenticated, async (req, res) => {
           country = COALESCE($9, country),
           bio = COALESCE($10, bio),
           specialties = COALESCE($11, specialties),
+          zip_code = COALESCE($12, zip_code),
+          display_name = COALESCE($13, display_name),
           updated_at = NOW()
          WHERE user_id = $1
          RETURNING *`,
         [req.user.id, account_type, stage_name, legal_first_name, legal_last_name,
-         date_of_birth, city, state_province, country, bio, specialties || null]
+         date_of_birth, city, state_province, country, bio, specialties || null,
+         zip_code, display_name]
       );
     } else {
       result = await pool.query(
-        `INSERT INTO user_profiles (user_id, account_type, stage_name, legal_first_name, legal_last_name,
-          date_of_birth, city, state_province, country, bio, specialties)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `INSERT INTO user_profiles (user_id, account_type, stage_name, display_name, legal_first_name, legal_last_name,
+          date_of_birth, city, state_province, country, zip_code, bio, specialties)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
          RETURNING *`,
-        [req.user.id, account_type || 'buyer', stage_name, legal_first_name, legal_last_name,
-         date_of_birth, city, state_province, country, bio, specialties || null]
+        [req.user.id, account_type || 'buyer', stage_name, display_name, legal_first_name, legal_last_name,
+         date_of_birth, city, state_province, country, zip_code, bio, specialties || null]
       );
     }
 
