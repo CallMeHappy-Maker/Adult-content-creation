@@ -109,7 +109,7 @@ async function setupAuth() {
   passport.use(strategy);
 }
 
-const ALLOWED_REDIRECTS = ['/', '/signup.html', '/client-signup.html', '/verify.html', '/creators.html', '/chat.html', '/admin.html'];
+const ALLOWED_REDIRECTS = ['/', '/signup.html', '/client-signup.html', '/verify.html', '/creators.html', '/chat.html', '/admin.html', '/creator-settings.html'];
 const ALLOWED_ACCOUNT_TYPES = ['creator', 'buyer'];
 
 app.get('/api/login', (req, res, next) => {
@@ -256,6 +256,27 @@ app.get('/api/auth/user', async (req, res) => {
   }
 });
 
+app.post('/api/age-confirm', (req, res) => {
+  if (req.session) {
+    req.session.ageVerified = true;
+  }
+  res.json({ success: true });
+});
+
+app.get('/api/age-status', (req, res) => {
+  res.json({ verified: req.session?.ageVerified === true });
+});
+
+function requireAgeVerification(req, res, next) {
+  if (req.session?.ageVerified === true) {
+    return next();
+  }
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+  res.status(403).json({ error: 'Age verification required' });
+}
+
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated && req.isAuthenticated()) {
     return next();
@@ -385,7 +406,7 @@ app.get('/api/admin/check', isAuthenticated, isAdmin, (req, res) => {
   res.json({ isAdmin: true });
 });
 
-app.get('/api/creators', async (req, res) => {
+app.get('/api/creators', requireAgeVerification, async (req, res) => {
   try {
     const { search, zip_code, radius } = req.query;
     let query = `
@@ -418,7 +439,7 @@ app.get('/api/creators', async (req, res) => {
   }
 });
 
-app.get('/api/creators/:name', async (req, res) => {
+app.get('/api/creators/:name', requireAgeVerification, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT up.stage_name, up.display_name, up.bio, up.city, up.state_province,
@@ -539,6 +560,120 @@ app.post('/api/profile/upload-id', isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error('Error uploading ID:', error);
     res.status(500).json({ error: 'Failed to upload ID document' });
+  }
+});
+
+app.get('/api/attestation', isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM creator_attestations WHERE user_id = $1 ORDER BY accepted_at DESC LIMIT 1',
+      [req.user.id]
+    );
+    res.json(result.rows[0] || null);
+  } catch (error) {
+    console.error('Error fetching attestation:', error);
+    res.status(500).json({ error: 'Failed to fetch attestation' });
+  }
+});
+
+app.post('/api/attestation', isAuthenticated, async (req, res) => {
+  try {
+    const { is_18_plus, owns_content_rights, services_comply_with_laws, no_third_party_without_consent } = req.body;
+
+    if (!is_18_plus || !owns_content_rights || !services_comply_with_laws || !no_third_party_without_consent) {
+      return res.status(400).json({ error: 'All attestation checkboxes must be accepted' });
+    }
+
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const version = 'v1';
+
+    await pool.query(
+      `INSERT INTO creator_attestations (user_id, attestation_version, is_18_plus, owns_content_rights, services_comply_with_laws, no_third_party_without_consent, ip_address, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (user_id, attestation_version) DO UPDATE SET
+         is_18_plus = $3, owns_content_rights = $4, services_comply_with_laws = $5, no_third_party_without_consent = $6,
+         ip_address = $7, user_agent = $8, accepted_at = NOW()`,
+      [req.user.id, version, is_18_plus, owns_content_rights, services_comply_with_laws, no_third_party_without_consent, ip, userAgent]
+    );
+
+    res.json({ success: true, version });
+  } catch (error) {
+    console.error('Error saving attestation:', error);
+    res.status(500).json({ error: 'Failed to save attestation' });
+  }
+});
+
+app.get('/api/creator-settings', isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM creator_settings WHERE user_id = $1',
+      [req.user.id]
+    );
+    res.json(result.rows[0] || null);
+  } catch (error) {
+    console.error('Error fetching creator settings:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+app.post('/api/creator-settings', isAuthenticated, async (req, res) => {
+  try {
+    const { availability_days, availability_start_time, availability_end_time, cancellation_buffer_hours, require_booking_approval, auto_block_after_violations } = req.body;
+
+    const existing = await pool.query('SELECT id FROM creator_settings WHERE user_id = $1', [req.user.id]);
+
+    let result;
+    if (existing.rows.length > 0) {
+      result = await pool.query(
+        `UPDATE creator_settings SET
+          availability_days = COALESCE($2, availability_days),
+          availability_start_time = COALESCE($3, availability_start_time),
+          availability_end_time = COALESCE($4, availability_end_time),
+          cancellation_buffer_hours = COALESCE($5, cancellation_buffer_hours),
+          require_booking_approval = COALESCE($6, require_booking_approval),
+          auto_block_after_violations = COALESCE($7, auto_block_after_violations),
+          updated_at = NOW()
+         WHERE user_id = $1
+         RETURNING *`,
+        [req.user.id, availability_days, availability_start_time, availability_end_time,
+         cancellation_buffer_hours, require_booking_approval, auto_block_after_violations]
+      );
+    } else {
+      result = await pool.query(
+        `INSERT INTO creator_settings (user_id, availability_days, availability_start_time, availability_end_time, cancellation_buffer_hours, require_booking_approval, auto_block_after_violations)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *`,
+        [req.user.id, availability_days || 'mon,tue,wed,thu,fri', availability_start_time || '10:00',
+         availability_end_time || '18:00', cancellation_buffer_hours || 48,
+         require_booking_approval || false, auto_block_after_violations || 0]
+      );
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error saving creator settings:', error);
+    res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
+app.get('/api/creators/:name/settings', requireAgeVerification, async (req, res) => {
+  try {
+    const profile = await pool.query(
+      'SELECT user_id FROM user_profiles WHERE stage_name = $1 AND account_type = $2',
+      [req.params.name, 'creator']
+    );
+    if (profile.rows.length === 0) {
+      return res.json(null);
+    }
+    const result = await pool.query(
+      'SELECT availability_days, availability_start_time, availability_end_time, cancellation_buffer_hours, require_booking_approval FROM creator_settings WHERE user_id = $1',
+      [profile.rows[0].user_id]
+    );
+    res.json(result.rows[0] || null);
+  } catch (error) {
+    console.error('Error fetching creator settings:', error);
+    res.status(500).json({ error: 'Failed to fetch creator settings' });
   }
 });
 
@@ -702,7 +837,7 @@ async function addUserWarning(userName, conversationId, category, reason) {
   }
 }
 
-app.post('/api/conversations', isAuthenticated, isVerifiedUser, async (req, res) => {
+app.post('/api/conversations', isAuthenticated, isVerifiedUser, requireAgeVerification, async (req, res) => {
   try {
     const { creatorName, buyerName, buyerEmail } = req.body;
     if (!creatorName || !buyerName) {
@@ -729,7 +864,7 @@ app.post('/api/conversations', isAuthenticated, isVerifiedUser, async (req, res)
   }
 });
 
-app.get('/api/conversations', isAuthenticated, isVerifiedUser, async (req, res) => {
+app.get('/api/conversations', isAuthenticated, isVerifiedUser, requireAgeVerification, async (req, res) => {
   try {
     const { user, role } = req.query;
     if (!user || !role) {
@@ -764,7 +899,7 @@ app.get('/api/conversations', isAuthenticated, isVerifiedUser, async (req, res) 
   }
 });
 
-app.get('/api/conversations/:id/messages', isAuthenticated, isVerifiedUser, async (req, res) => {
+app.get('/api/conversations/:id/messages', isAuthenticated, isVerifiedUser, requireAgeVerification, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
@@ -778,7 +913,7 @@ app.get('/api/conversations/:id/messages', isAuthenticated, isVerifiedUser, asyn
   }
 });
 
-app.post('/api/conversations/:id/messages', isAuthenticated, isVerifiedUser, async (req, res) => {
+app.post('/api/conversations/:id/messages', isAuthenticated, isVerifiedUser, requireAgeVerification, async (req, res) => {
   try {
     const { id } = req.params;
     const { content, senderType, senderName } = req.body;
@@ -789,6 +924,38 @@ app.post('/api/conversations/:id/messages', isAuthenticated, isVerifiedUser, asy
 
     if (content.length > 2000) {
       return res.status(400).json({ error: 'Message is too long. Maximum 2000 characters.' });
+    }
+
+    const conv = await pool.query('SELECT creator_name, buyer_name FROM conversations WHERE id = $1', [id]);
+    if (conv.rows.length > 0) {
+      const creatorName = conv.rows[0].creator_name;
+      const isBuyer = senderName === conv.rows[0].buyer_name;
+
+      if (isBuyer) {
+        const creatorProfile = await pool.query(
+          'SELECT user_id FROM user_profiles WHERE stage_name = $1 AND account_type = $2',
+          [creatorName, 'creator']
+        );
+
+        if (creatorProfile.rows.length > 0) {
+          const settings = await pool.query(
+            'SELECT auto_block_after_violations FROM creator_settings WHERE user_id = $1',
+            [creatorProfile.rows[0].user_id]
+          );
+
+          if (settings.rows.length > 0 && settings.rows[0].auto_block_after_violations > 0) {
+            const threshold = settings.rows[0].auto_block_after_violations;
+            const senderWarnings = await getUserWarningCount(senderName);
+            if (senderWarnings >= threshold) {
+              return res.status(403).json({
+                error: 'You have been blocked from messaging this creator due to repeated policy violations.',
+                warning: 'Your message history with this creator has been restricted.',
+                action: 'auto_blocked'
+              });
+            }
+          }
+        }
+      }
     }
 
     const moderation = await moderateMessage(content, senderName, senderType);
@@ -876,7 +1043,7 @@ app.get('/api/moderation-logs', async (req, res) => {
   }
 });
 
-app.post('/api/messages/:messageId/report', isAuthenticated, isVerifiedUser, async (req, res) => {
+app.post('/api/messages/:messageId/report', isAuthenticated, isVerifiedUser, requireAgeVerification, async (req, res) => {
   try {
     const { messageId } = req.params;
     const { reason, details, reporterName, reporterRole } = req.body;
@@ -939,18 +1106,44 @@ app.get('/api/stripe/publishable-key', async (req, res) => {
   }
 });
 
-app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, async (req, res) => {
+app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, requireAgeVerification, async (req, res) => {
   try {
     const { serviceName, creatorName, amount, description, sessionDetails } = req.body;
     const stripe = await getStripeClient();
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
     const creatorProfile = await pool.query(
-      'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM user_profiles WHERE stage_name = $1 AND account_type = $2',
+      'SELECT user_id, stripe_connect_account_id, stripe_onboarding_complete FROM user_profiles WHERE stage_name = $1 AND account_type = $2',
       [creatorName, 'creator']
     );
 
+    if (creatorProfile.rows.length > 0) {
+      const creatorUserId = creatorProfile.rows[0].user_id;
+      const attestation = await pool.query(
+        'SELECT id FROM creator_attestations WHERE user_id = $1 AND is_18_plus = true AND has_content_rights = true AND agrees_legal_compliance = true AND agrees_consent_practices = true',
+        [creatorUserId]
+      );
+      if (attestation.rows.length === 0) {
+        return res.status(403).json({ error: 'This creator has not completed required legal attestations. Payment cannot be processed.' });
+      }
+
+      const profileCheck = await pool.query(
+        'SELECT legal_first_name, legal_last_name, date_of_birth, location FROM user_profiles WHERE user_id = $1',
+        [creatorUserId]
+      );
+      if (profileCheck.rows.length === 0 || !profileCheck.rows[0].legal_first_name || !profileCheck.rows[0].date_of_birth) {
+        return res.status(403).json({ error: 'This creator has not completed identity verification. Payment cannot be processed.' });
+      }
+    }
+
     const platformFee = Math.round(amount * 0.15);
+
+    const neutralServiceName = serviceName
+      .replace(/\b(sex|sexual|nude|naked|explicit)\b/gi, 'custom')
+      .replace(/\b(escort|escorting)\b/gi, 'appearance');
+    const neutralDescription = (description || `Service booking from ${creatorName}`)
+      .replace(/\b(sex|sexual|nude|naked|explicit)\b/gi, 'custom')
+      .replace(/\b(escort|escorting)\b/gi, 'appearance');
 
     const sessionParams = {
       payment_method_types: ['card'],
@@ -959,8 +1152,8 @@ app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, async (req, re
           currency: 'usd',
           unit_amount: Math.round(amount),
           product_data: {
-            name: serviceName,
-            description: description || `Service from ${creatorName}`,
+            name: neutralServiceName,
+            description: neutralDescription,
           },
         },
         quantity: 1,
@@ -971,8 +1164,8 @@ app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, async (req, re
       metadata: {
         creator_name: creatorName,
         buyer_id: req.user.id,
-        service_name: serviceName,
-        session_details: sessionDetails ? JSON.stringify(sessionDetails) : null,
+        service_type: 'digital_service',
+        booking_ref: `bk_${Date.now()}`,
       },
     };
 
@@ -1007,15 +1200,35 @@ app.post('/api/stripe/connect-onboarding', isAuthenticated, async (req, res) => 
       return res.status(400).json({ error: 'Only creators can set up payment receiving' });
     }
 
+    if (!profile.rows[0].verification_status || !['submitted', 'verified'].includes(profile.rows[0].verification_status)) {
+      return res.status(400).json({ error: 'You must complete identity verification before setting up payments' });
+    }
+
+    const attestation = await pool.query(
+      'SELECT id FROM creator_attestations WHERE user_id = $1 AND is_18_plus = true AND owns_content_rights = true AND services_comply_with_laws = true AND no_third_party_without_consent = true',
+      [req.user.id]
+    );
+    if (attestation.rows.length === 0) {
+      return res.status(400).json({ error: 'You must complete the legal self-attestation before setting up payments' });
+    }
+
     let accountId = profile.rows[0].stripe_connect_account_id;
 
     if (!accountId) {
       const account = await stripe.accounts.create({
         type: 'express',
         email: req.user.email,
+        settings: {
+          payouts: {
+            schedule: {
+              delay_days: 3,
+              interval: 'daily',
+            },
+          },
+        },
         metadata: {
           user_id: req.user.id,
-          stage_name: profile.rows[0].stage_name,
+          platform_creator_ref: profile.rows[0].stage_name,
         },
       });
       accountId = account.id;

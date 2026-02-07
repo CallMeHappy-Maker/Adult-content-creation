@@ -227,6 +227,31 @@
           </div>
         </div>
 
+        <div class="verify-step hidden" id="attestation-section">
+          <h3>9. Legal Self-Attestation</h3>
+          <p class="step-note">Before you can publish services or receive payments, you must confirm the following:</p>
+          <div class="attestation-checkboxes">
+            <label class="attestation-item">
+              <input type="checkbox" id="attest-18" class="attest-cb">
+              <span>I confirm that I am 18 years of age or older</span>
+            </label>
+            <label class="attestation-item">
+              <input type="checkbox" id="attest-rights" class="attest-cb">
+              <span>I own the rights to all content I sell through this platform</span>
+            </label>
+            <label class="attestation-item">
+              <input type="checkbox" id="attest-legal" class="attest-cb">
+              <span>My services comply with all applicable local, state, and federal laws</span>
+            </label>
+            <label class="attestation-item">
+              <input type="checkbox" id="attest-consent" class="attest-cb">
+              <span>No third parties appear in my content without their documented consent</span>
+            </label>
+          </div>
+          <p class="attestation-note">By checking these boxes, you are making a legally binding attestation. This acceptance is logged with your IP address and timestamp. <a href="/platform-role.html">View Platform Policies</a></p>
+          <div id="attestation-status" class="hidden"></div>
+        </div>
+
         <button type="button" id="submit-verification" class="btn-save">Complete Verification</button>
         <div id="verify-feedback"></div>
       </div>
@@ -250,6 +275,14 @@
       </div>
     </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="footer-links">
+      <a href="/platform-role.html">Platform Policies</a>
+      <a href="/fees.html">Fees & Refunds</a>
+    </div>
+    <p class="footer-copy">&copy; 2026 Adult Content Marketplace. All rights reserved.</p>
+  </footer>
 </div>
 </body>
 </html>

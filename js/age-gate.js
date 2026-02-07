@@ -1,4 +1,3 @@
-
 (function() {
   const gate = document.getElementById('age-gate');
   const content = document.getElementById('main-content');
@@ -11,6 +10,7 @@
 
 function acceptAge() {
   sessionStorage.setItem('age_verified', 'true');
+  fetch('/api/age-confirm', { method: 'POST' }).catch(() => {});
   document.getElementById('age-gate').style.display = 'none';
   document.getElementById('main-content').classList.remove('hidden');
 }

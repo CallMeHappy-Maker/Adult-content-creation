@@ -318,11 +318,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const areaInfo = document.getElementById("in-person-creator-area");
       const locationParts = [profile.city, profile.state_province].filter(Boolean);
+      let areaHtml = '';
       if (locationParts.length > 0) {
-        areaInfo.innerHTML = `<p><strong>Creator's General Area:</strong> ${esc(locationParts.join(", "))}</p>`;
+        areaHtml = `<p><strong>Creator's General Area:</strong> ${esc(locationParts.join(", "))}</p>`;
       } else {
-        areaInfo.innerHTML = `<p><strong>Creator's General Area:</strong> Not specified — arrange via messaging after booking.</p>`;
+        areaHtml = `<p><strong>Creator's General Area:</strong> Not specified — arrange via messaging after booking.</p>`;
       }
+
+      fetch(`/api/creators/${encodeURIComponent(profile.name)}/settings`)
+        .then(r => r.json())
+        .then(settings => {
+          if (settings) {
+            const dayMap = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
+            const days = (settings.availability_days || '').split(',').map(d => dayMap[d] || d).join(', ');
+            const start = settings.availability_start_time || '10:00';
+            const end = settings.availability_end_time || '18:00';
+            const buffer = settings.cancellation_buffer_hours || 48;
+            const approval = settings.require_booking_approval ? 'Yes — creator must approve before confirmation' : 'No — instant booking';
+
+            areaHtml += `<div class="creator-availability-info">
+              <p><strong>Available Days:</strong> ${esc(days)}</p>
+              <p><strong>Hours:</strong> ${esc(start)} – ${esc(end)}</p>
+              <p><strong>Cancellation Policy:</strong> ${buffer}h notice required</p>
+              <p><strong>Requires Approval:</strong> ${approval}</p>
+            </div>`;
+          }
+          areaInfo.innerHTML = areaHtml;
+        })
+        .catch(() => { areaInfo.innerHTML = areaHtml; });
 
       document.querySelectorAll(".safety-cb").forEach(cb => { cb.checked = false; });
     } else {

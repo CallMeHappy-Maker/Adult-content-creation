@@ -43,12 +43,16 @@ document.addEventListener("DOMContentLoaded", () => {
   dobMonth.addEventListener("change", populateDays);
   dobYear.addEventListener("change", populateDays);
 
+  const attestationSection = document.getElementById("attestation-section");
+
   document.querySelectorAll('input[name="account_type"]').forEach(radio => {
     radio.addEventListener("change", () => {
       if (radio.value === "creator") {
         specialtiesSection.classList.remove("hidden");
+        attestationSection.classList.remove("hidden");
       } else {
         specialtiesSection.classList.add("hidden");
+        attestationSection.classList.add("hidden");
       }
     });
   });
@@ -101,7 +105,11 @@ document.addEventListener("DOMContentLoaded", () => {
           const radio = document.querySelector(`input[name="account_type"][value="${p.account_type}"]`);
           if (radio) {
             radio.checked = true;
-            if (p.account_type === 'creator') specialtiesSection.classList.remove("hidden");
+            if (p.account_type === 'creator') {
+              specialtiesSection.classList.remove("hidden");
+              attestationSection.classList.remove("hidden");
+              loadAttestationStatus();
+            }
           }
         }
         if (p.stage_name) document.getElementById("v-stage-name").value = p.stage_name;
@@ -169,6 +177,16 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll('input[name="v-specialty"]:checked').forEach(cb => {
         specialties.push(cb.value);
       });
+
+      const attest18 = document.getElementById("attest-18").checked;
+      const attestRights = document.getElementById("attest-rights").checked;
+      const attestLegal = document.getElementById("attest-legal").checked;
+      const attestConsent = document.getElementById("attest-consent").checked;
+
+      if (!attest18 || !attestRights || !attestLegal || !attestConsent) {
+        showFeedback("You must accept all legal attestation checkboxes to register as a creator.", "#f55");
+        return;
+      }
     }
 
     submitBtn.disabled = true;
@@ -219,6 +237,25 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!profileRes.ok) {
         const err = await profileRes.json();
         throw new Error(err.error || 'Failed to save profile');
+      }
+
+      if (accountType.value === 'creator') {
+        showFeedback("Saving attestation...", "#CC0033");
+        const attestRes = await fetch('/api/attestation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            is_18_plus: true,
+            owns_content_rights: true,
+            services_comply_with_laws: true,
+            no_third_party_without_consent: true,
+          }),
+        });
+
+        if (!attestRes.ok) {
+          const err = await attestRes.json();
+          throw new Error(err.error || 'Failed to save attestation');
+        }
       }
 
       verifyForm.classList.add("hidden");
@@ -287,6 +324,23 @@ document.addEventListener("DOMContentLoaded", () => {
     verifyForm.classList.add("hidden");
     verifySuccess.classList.remove("hidden");
     showStripeSetup();
+  }
+
+  async function loadAttestationStatus() {
+    try {
+      const res = await fetch('/api/attestation');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.is_18_plus) {
+        const statusEl = document.getElementById("attestation-status");
+        statusEl.classList.remove("hidden");
+        statusEl.innerHTML = '<span style="color:#0f0;">Attestation accepted (v' + data.attestation_version.replace('v','') + ') on ' + new Date(data.accepted_at).toLocaleDateString() + '</span>';
+        document.getElementById("attest-18").checked = true;
+        document.getElementById("attest-rights").checked = true;
+        document.getElementById("attest-legal").checked = true;
+        document.getElementById("attest-consent").checked = true;
+      }
+    } catch (e) {}
   }
 
   function showFeedback(msg, color) {

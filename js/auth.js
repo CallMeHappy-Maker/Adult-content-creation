@@ -104,6 +104,11 @@ function updateNavAuth(data) {
 
     let messagesLink = `<a href="/chat.html" class="auth-nav-link">Messages</a>`;
 
+    let creatorSettingsLink = '';
+    if (profile && profile.account_type === 'creator') {
+      creatorSettingsLink = `<a href="/creator-settings.html" class="auth-nav-link">Creator Settings</a>`;
+    }
+
     let adminLink = '';
     checkAdminStatus().then(isAdminUser => {
       if (isAdminUser) {
@@ -125,6 +130,7 @@ function updateNavAuth(data) {
         <span class="auth-nav-name">${escapeHtmlAuth(displayName)}</span>
         ${verifyLink}
         ${messagesLink}
+        ${creatorSettingsLink}
         <a href="/api/logout" class="auth-nav-logout">Log Out</a>
       </div>
     `;
