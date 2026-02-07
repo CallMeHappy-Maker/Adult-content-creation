@@ -55,6 +55,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   loadChatsBtn.addEventListener("click", () => {
+    if (typeof requireVerified === 'function' && !requireVerified('access messages')) return;
+
     const name = document.getElementById("identity-name").value.trim();
     const role = document.getElementById("identity-role").value;
 

@@ -239,6 +239,12 @@
           <h3>Verification Submitted!</h3>
           <p>Your identity verification has been submitted for review.</p>
           <div class="status-badge status-submitted">Status: Submitted</div>
+          <div id="stripe-setup-section" class="stripe-setup hidden">
+            <h3>Payment Setup</h3>
+            <p>Set up your payment account to receive payouts for your services.</p>
+            <div id="stripe-status" class="stripe-status"></div>
+            <button type="button" id="setup-stripe-btn" class="btn-primary">Set Up Payments</button>
+          </div>
           <div class="verify-actions">
             <a href="/" class="btn-primary">Go to Marketplace</a>
             <a href="/creators.html" class="btn-secondary">Set Up Creator Profile</a>

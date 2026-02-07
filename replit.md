@@ -22,7 +22,7 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - Creator storefront pages showing services with pricing
 - Order flow with fee breakdown and in-person session booking (date/time/location)
 - Age verification gate on all pages
-- Moderated messaging console with consent overlay, violation detection, audit logs
+- AI-moderated messaging (dual-layer: regex pre-filter + GPT-5-mini contextual detection)
 - Creator sign-up page with DOB-based age verification and profile setup
 - Navigation bar linking all pages (Home, Creators, Sign Up, Messages)
 - Dark theme (black/#8B0000 dark red/#0ff cyan)
@@ -30,8 +30,11 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - Served by Express.js on port 5000
 - User authentication via Replit OIDC (OpenID Connect) with Passport.js
 - PostgreSQL database for users, sessions, profiles, conversations, messages
-- Identity verification system with ID document upload
+- Identity verification system with ID document upload (base64 storage)
 - Profile management (account type, legal identity, display name, location, bio, specialties)
+- Stripe integration: buyer checkout sessions, creator Connect onboarding for payouts
+- Access control: messaging, ordering, and creator setup require verified accounts
+- Server-side auth middleware on all sensitive API routes
 
 ## Project Architecture
 - `index.html` — Marketplace landing page with hero section and featured creators grid
@@ -113,18 +116,20 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - `node server.js` — starts the app on port 5000
 
 ## Recent Changes
+- 2026-02-07: Added access control — messaging, ordering require verified accounts (client + server-side)
+- 2026-02-07: Added Stripe Connect onboarding for creators on verify page with status display
+- 2026-02-07: Integrated Stripe payments: checkout sessions, Connect payouts, webhook handling
+- 2026-02-07: Added AI-moderated messaging (regex pre-filter + GPT-5-mini contextual detection)
 - 2026-02-07: Added OIDC authentication (Replit login) with Passport.js, session management, user upsert
 - 2026-02-07: Added identity verification page (verify.html) with account type, legal identity, DOB, location, ID document upload
 - 2026-02-07: Added profile management API routes (GET/POST /api/profile, POST /api/profile/upload-id)
 - 2026-02-07: Added client-side auth utilities (js/auth.js) with nav bar auth state display
 - 2026-02-07: Updated all HTML pages with auth nav integration
-- 2026-02-07: Added creator sign-up page with DOB age verification, profile pic upload, bio, content specialties
 - 2026-02-07: Rebuilt app as content creator marketplace (was community posting site)
 - 2026-02-07: Created marketplace landing page with creator directory
 - 2026-02-07: Built creator registration with service builder
 - 2026-02-07: Built storefront pages with ordering and fee breakdown
-- 2026-02-07: Added in-person session booking (date/time/location)
-- 2026-02-07: Added moderated messaging console (messaging.html)
+- 2026-02-07: Added moderated messaging console (chat.html)
 - 2026-02-07: Set up Express server, configured for Replit environment
 
 ## User Preferences
@@ -136,7 +141,8 @@ A web-based adult content creator marketplace where creators set up storefronts,
 
 ## Notes
 - `js/package.jason` is a misnamed file containing test code, not a real package config
-- Backend (Node/API/DB) will be added in later phases
 - Full legal compliance is a later implementation phase, but architecture accounts for it
 - Project owner retains full creative and operational control
-- Stripe payment integration ready but not yet connected (placeholder in place)
+- Stripe integration active (checkout + Connect) via Replit Stripe integration with managed webhooks
+- OpenAI integration for AI moderation via Replit AI Integrations (billed to Replit credits)
+- Creator profiles/services still stored in localStorage (migration to database planned)

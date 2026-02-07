@@ -8,11 +8,26 @@ const passport = require('passport');
 const { discovery, buildEndSessionUrl } = require('openid-client');
 const { Strategy } = require('openid-client/passport');
 const memoizee = require('memoizee');
+const { getStripeClient, getStripePublishableKey, getStripeSync } = require('./stripeClient');
 
 const app = express();
 const PORT = 5000;
 
 app.set('trust proxy', 1);
+
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const signature = req.headers['stripe-signature'];
+  if (!signature) return res.status(400).json({ error: 'Missing signature' });
+  try {
+    const sig = Array.isArray(signature) ? signature[0] : signature;
+    const sync = await getStripeSync();
+    await sync.processWebhook(req.body, sig);
+    res.status(200).json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error.message);
+    res.status(400).json({ error: 'Webhook processing error' });
+  }
+});
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -221,6 +236,22 @@ function isAuthenticated(req, res, next) {
   res.status(401).json({ error: 'Unauthorized' });
 }
 
+async function isVerifiedUser(req, res, next) {
+  try {
+    const result = await pool.query(
+      'SELECT verification_status FROM user_profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+    const profile = result.rows[0];
+    if (profile && (profile.verification_status === 'submitted' || profile.verification_status === 'verified')) {
+      return next();
+    }
+    res.status(403).json({ error: 'Identity verification required' });
+  } catch (error) {
+    res.status(500).json({ error: 'Verification check failed' });
+  }
+}
+
 app.get('/api/profile', isAuthenticated, async (req, res) => {
   try {
     const result = await pool.query(
@@ -417,7 +448,7 @@ or
   }
 }
 
-app.post('/api/conversations', async (req, res) => {
+app.post('/api/conversations', isAuthenticated, isVerifiedUser, async (req, res) => {
   try {
     const { creatorName, buyerName, buyerEmail } = req.body;
     if (!creatorName || !buyerName) {
@@ -444,7 +475,7 @@ app.post('/api/conversations', async (req, res) => {
   }
 });
 
-app.get('/api/conversations', async (req, res) => {
+app.get('/api/conversations', isAuthenticated, isVerifiedUser, async (req, res) => {
   try {
     const { user, role } = req.query;
     if (!user || !role) {
@@ -479,7 +510,7 @@ app.get('/api/conversations', async (req, res) => {
   }
 });
 
-app.get('/api/conversations/:id/messages', async (req, res) => {
+app.get('/api/conversations/:id/messages', isAuthenticated, isVerifiedUser, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
@@ -493,7 +524,7 @@ app.get('/api/conversations/:id/messages', async (req, res) => {
   }
 });
 
-app.post('/api/conversations/:id/messages', async (req, res) => {
+app.post('/api/conversations/:id/messages', isAuthenticated, isVerifiedUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { content, senderType, senderName } = req.body;
@@ -550,15 +581,193 @@ app.get('/api/moderation-logs', async (req, res) => {
   }
 });
 
-setupAuth()
-  .then(() => {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://0.0.0.0:${PORT}`);
+app.get('/api/stripe/publishable-key', async (req, res) => {
+  try {
+    const key = await getStripePublishableKey();
+    res.json({ publishableKey: key });
+  } catch (error) {
+    console.error('Error getting publishable key:', error);
+    res.status(500).json({ error: 'Stripe not configured' });
+  }
+});
+
+app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, async (req, res) => {
+  try {
+    const { serviceName, creatorName, amount, description, sessionDetails } = req.body;
+    const stripe = await getStripeClient();
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const creatorProfile = await pool.query(
+      'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM user_profiles WHERE stage_name = $1 AND account_type = $2',
+      [creatorName, 'creator']
+    );
+
+    const platformFee = Math.round(amount * 0.15);
+
+    const sessionParams = {
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          unit_amount: Math.round(amount),
+          product_data: {
+            name: serviceName,
+            description: description || `Service from ${creatorName}`,
+          },
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `${baseUrl}/creators.html?creator=${encodeURIComponent(creatorName)}&payment=success`,
+      cancel_url: `${baseUrl}/creators.html?creator=${encodeURIComponent(creatorName)}&payment=cancelled`,
+      metadata: {
+        creator_name: creatorName,
+        buyer_id: req.user.id,
+        service_name: serviceName,
+        session_details: sessionDetails ? JSON.stringify(sessionDetails) : null,
+      },
+    };
+
+    if (creatorProfile.rows.length > 0 && creatorProfile.rows[0].stripe_connect_account_id && creatorProfile.rows[0].stripe_onboarding_complete) {
+      sessionParams.payment_intent_data = {
+        application_fee_amount: platformFee,
+        transfer_data: {
+          destination: creatorProfile.rows[0].stripe_connect_account_id,
+        },
+      };
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
+    res.json({ url: checkoutSession.url });
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
+app.post('/api/stripe/connect-onboarding', isAuthenticated, async (req, res) => {
+  try {
+    const stripe = await getStripeClient();
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const profile = await pool.query(
+      'SELECT * FROM user_profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+
+    if (profile.rows.length === 0 || profile.rows[0].account_type !== 'creator') {
+      return res.status(400).json({ error: 'Only creators can set up payment receiving' });
+    }
+
+    let accountId = profile.rows[0].stripe_connect_account_id;
+
+    if (!accountId) {
+      const account = await stripe.accounts.create({
+        type: 'express',
+        email: req.user.email,
+        metadata: {
+          user_id: req.user.id,
+          stage_name: profile.rows[0].stage_name,
+        },
+      });
+      accountId = account.id;
+
+      await pool.query(
+        'UPDATE user_profiles SET stripe_connect_account_id = $2, updated_at = NOW() WHERE user_id = $1',
+        [req.user.id, accountId]
+      );
+    }
+
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: `${baseUrl}/verify.html?stripe=refresh`,
+      return_url: `${baseUrl}/verify.html?stripe=complete`,
+      type: 'account_onboarding',
     });
-  })
-  .catch((err) => {
-    console.error('Failed to set up auth:', err);
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://0.0.0.0:${PORT} (auth setup failed)`);
+
+    res.json({ url: accountLink.url });
+  } catch (error) {
+    console.error('Error creating Connect onboarding:', error);
+    res.status(500).json({ error: 'Failed to start payment setup' });
+  }
+});
+
+app.get('/api/stripe/connect-status', isAuthenticated, async (req, res) => {
+  try {
+    const profile = await pool.query(
+      'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM user_profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+
+    if (profile.rows.length === 0 || !profile.rows[0].stripe_connect_account_id) {
+      return res.json({ connected: false, onboarding_complete: false });
+    }
+
+    const stripe = await getStripeClient();
+    const account = await stripe.accounts.retrieve(profile.rows[0].stripe_connect_account_id);
+
+    const isComplete = account.charges_enabled && account.payouts_enabled;
+
+    if (isComplete && !profile.rows[0].stripe_onboarding_complete) {
+      await pool.query(
+        'UPDATE user_profiles SET stripe_onboarding_complete = true, updated_at = NOW() WHERE user_id = $1',
+        [req.user.id]
+      );
+    }
+
+    res.json({
+      connected: true,
+      onboarding_complete: isComplete,
+      charges_enabled: account.charges_enabled,
+      payouts_enabled: account.payouts_enabled,
     });
+  } catch (error) {
+    console.error('Error checking Connect status:', error);
+    res.status(500).json({ error: 'Failed to check payment status' });
+  }
+});
+
+async function initStripe() {
+  try {
+    const { runMigrations } = await import('stripe-replit-sync');
+    console.log('Initializing Stripe schema...');
+    await runMigrations({ databaseUrl: process.env.DATABASE_URL });
+    console.log('Stripe schema ready');
+
+    const stripeSync = await getStripeSync();
+    const webhookBaseUrl = `https://${(process.env.REPLIT_DOMAINS || '').split(',')[0]}`;
+    if (webhookBaseUrl !== 'https://') {
+      const { webhook } = await stripeSync.findOrCreateManagedWebhook(`${webhookBaseUrl}/api/stripe/webhook`);
+      console.log('Stripe webhook configured');
+    }
+
+    stripeSync.syncBackfill().then(() => {
+      console.log('Stripe data synced');
+    }).catch((err) => {
+      console.error('Stripe backfill error:', err.message);
+    });
+  } catch (error) {
+    console.error('Stripe initialization error:', error.message);
+  }
+}
+
+async function startServer() {
+  try {
+    await setupAuth();
+    console.log('Auth setup complete');
+  } catch (err) {
+    console.error('Auth setup failed:', err.message);
+  }
+
+  try {
+    await initStripe();
+  } catch (err) {
+    console.error('Stripe setup failed:', err.message);
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
+}
+
+startServer();

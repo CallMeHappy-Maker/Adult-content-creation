@@ -171,9 +171,18 @@ document.addEventListener("DOMContentLoaded", () => {
     msgLink.textContent = "Message This Creator";
     msgLink.addEventListener("click", (e) => {
       e.preventDefault();
-      const buyerName = prompt("Enter your name to message this creator:");
-      if (buyerName && buyerName.trim()) {
-        window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}&buyer=${encodeURIComponent(buyerName.trim())}`;
+      if (typeof requireVerified === 'function' && !requireVerified('message this creator')) return;
+
+      const authData = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+      if (authData && authData.user) {
+        const profile = authData.profile;
+        const buyerName = profile && profile.stage_name ? profile.stage_name : (authData.user.first_name || authData.user.email || 'User');
+        window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}&buyer=${encodeURIComponent(buyerName)}`;
+      } else {
+        const buyerName = prompt("Enter your name to message this creator:");
+        if (buyerName && buyerName.trim()) {
+          window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}&buyer=${encodeURIComponent(buyerName.trim())}`;
+        }
       }
     });
     headerEl.appendChild(msgLink);
@@ -203,6 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     servicesContainer.querySelectorAll(".btn-order").forEach(btn => {
       btn.addEventListener("click", () => {
+        if (typeof requireVerified === 'function' && !requireVerified('place an order')) return;
         const idx = parseInt(btn.getAttribute("data-idx"));
         openOrderForm(profile, services[idx]);
       });

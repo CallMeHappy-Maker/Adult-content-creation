@@ -223,12 +223,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
       verifyForm.classList.add("hidden");
       verifySuccess.classList.remove("hidden");
+
+      if (accountType.value === 'creator') {
+        showStripeSetup();
+      }
     } catch (error) {
       showFeedback(error.message || "An error occurred. Please try again.", "#f55");
       submitBtn.disabled = false;
       submitBtn.textContent = "Complete Verification";
     }
   });
+
+  function showStripeSetup() {
+    const stripeSection = document.getElementById("stripe-setup-section");
+    const setupBtn = document.getElementById("setup-stripe-btn");
+    const stripeStatus = document.getElementById("stripe-status");
+    if (!stripeSection) return;
+
+    stripeSection.classList.remove("hidden");
+
+    fetch('/api/stripe/connect-status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.onboarding_complete) {
+          stripeStatus.innerHTML = '<span style="color:#0f0;">Payments Active</span>';
+          setupBtn.textContent = 'Payment Setup Complete';
+          setupBtn.disabled = true;
+        } else if (data.connected) {
+          stripeStatus.innerHTML = '<span style="color:#ff0;">Setup In Progress</span>';
+          setupBtn.textContent = 'Continue Payment Setup';
+        }
+      })
+      .catch(() => {});
+
+    setupBtn.addEventListener("click", async () => {
+      setupBtn.disabled = true;
+      setupBtn.textContent = "Redirecting to Stripe...";
+      try {
+        const res = await fetch('/api/stripe/connect-onboarding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error(data.error || 'Failed to start setup');
+        }
+      } catch (err) {
+        setupBtn.disabled = false;
+        setupBtn.textContent = "Set Up Payments";
+        stripeStatus.innerHTML = '<span style="color:#f55;">' + (err.message || 'Setup failed') + '</span>';
+      }
+    });
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('stripe') === 'complete') {
+    verifyForm.classList.add("hidden");
+    verifySuccess.classList.remove("hidden");
+    showStripeSetup();
+  } else if (urlParams.get('stripe') === 'refresh') {
+    verifyForm.classList.add("hidden");
+    verifySuccess.classList.remove("hidden");
+    showStripeSetup();
+  }
 
   function showFeedback(msg, color) {
     feedback.textContent = msg;

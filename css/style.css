@@ -1155,6 +1155,32 @@ main {
   text-align: center;
 }
 
+.stripe-setup {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: #1a1a2a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stripe-setup h3 {
+  color: #0ff;
+  margin: 0 0 0.5rem;
+  border: none;
+}
+
+.stripe-setup p {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.stripe-status {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 600px) {
   header h1 {
     font-size: 1.3rem;
