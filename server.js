@@ -108,7 +108,7 @@ async function setupAuth() {
     }
   );
 
-  passport.use(strategy);
+  passport.use('openid-client', strategy);
   authReady = true;
 }
 
