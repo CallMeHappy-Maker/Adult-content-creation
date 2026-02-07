@@ -48,3 +48,32 @@ input, textarea {
   color: #fff;
   border: 1px solid darkgreen;
 }
+
+select {
+  padding: 10px;
+  background: #111;
+  color: #fff;
+  border: 1px solid darkgreen;
+}
+
+#creator {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding-top: 2rem;
+  border-top: 1px solid #333;
+}
+
+#feed {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding-top: 1rem;
+  border-top: 1px solid #333;
+}
+
+.post {
+  background: #222;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #0ff;
+}

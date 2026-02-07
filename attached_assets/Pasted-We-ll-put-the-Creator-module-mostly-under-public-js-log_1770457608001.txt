@@ -1,0 +1,92 @@
+We’ll put the Creator module mostly under /public/js (logic) and in index.html (UI), optionally in /admin later for moderation.
+Files you need now:
+Copy code
+
+/public/js/app.js      (we’ll add Creator logic here)
+index.html             (we’ll add Creator UI here)
+Step 2: Creator UI (HTML)
+Add this inside your <main> in index.html under the Creator section:
+Copy code
+Html
+<section id="creator">
+  <h2>Creator Tools</h2>
+  
+  <label for="post-content">Your Post:</label><br/>
+  <textarea id="post-content" rows="4" cols="50" placeholder="Write something..."></textarea><br/>
+  
+  <label for="visibility">Visibility:</label>
+  <select id="visibility">
+    <option value="public">Public</option>
+    <option value="followers">Followers Only</option>
+    <option value="private">Private</option>
+  </select><br/><br/>
+  
+  <button id="create-post-btn">Create Post</button>
+
+  <div id="creator-feedback" style="margin-top:10px; color: #0f0;"></div>
+</section>
+✅ This gives us:
+Post input
+Visibility selector
+Button to submit
+Feedback area for success messages
+Step 3: Creator logic (JavaScript)
+Open /public/js/app.js and append:
+Copy code
+Js
+// --- Creator Module ---
+const createPostBtn = document.getElementById("create-post-btn");
+const postContent = document.getElementById("post-content");
+const visibilitySelect = document.getElementById("visibility");
+const feedback = document.getElementById("creator-feedback");
+const feedSection = document.getElementById("feed");
+
+createPostBtn.addEventListener("click", () => {
+  const content = postContent.value.trim();
+  const visibility = visibilitySelect.value;
+
+  if (!content) {
+    feedback.textContent = "Post cannot be empty!";
+    feedback.style.color = "#f55";
+    return;
+  }
+
+  // Build post element
+  const postEl = document.createElement("div");
+  postEl.className = "post";
+  postEl.innerHTML = `
+    <p>${content}</p>
+    <small>Visibility: ${visibility}</small>
+  `;
+
+  // Prepend to feed
+  feedSection.prepend(postEl);
+
+  // Clear inputs
+  postContent.value = "";
+  visibilitySelect.value = "public";
+  feedback.textContent = "Post created successfully!";
+  feedback.style.color = "#0f0";
+});
+Features implemented here:
+Create posts on the client side
+Select visibility (Public / Followers / Private)
+Posts immediately appear in the feed
+Feedback message shows success/error
+Input fields reset after posting
+Step 4: Optional styling for Creator posts
+Append to /public/css/styles.css:
+Copy code
+Css
+.post {
+  background: #222;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #0ff;
+}
+✅ What this gives you:
+Creators can write and post content
+Visibility is tagged (later for real filtering)
+Posts appear at the top of the feed dynamically
+Works on phone + Replit with no backend yet
