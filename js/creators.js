@@ -254,18 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
     msgLink.addEventListener("click", (e) => {
       e.preventDefault();
       if (typeof requireVerified === 'function' && !requireVerified('message this creator')) return;
-
-      const authData = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
-      if (authData && authData.user) {
-        const prof = authData.profile;
-        const buyerName = prof && prof.stage_name ? prof.stage_name : (authData.user.first_name || authData.user.email || 'User');
-        window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}&buyer=${encodeURIComponent(buyerName)}`;
-      } else {
-        const buyerName = prompt("Enter your name to message this creator:");
-        if (buyerName && buyerName.trim()) {
-          window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}&buyer=${encodeURIComponent(buyerName.trim())}`;
-        }
-      }
+      window.location.href = `/chat.html?creator=${encodeURIComponent(creatorName)}`;
     });
     headerEl.appendChild(msgLink);
 

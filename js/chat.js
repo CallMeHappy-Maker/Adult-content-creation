@@ -52,25 +52,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const params = new URLSearchParams(window.location.search);
   const presetCreator = params.get("creator");
-  const presetBuyer = params.get("buyer");
 
-  if (presetBuyer && presetCreator) {
-    waitForAuth(3000).then((authData) => {
+  if (presetCreator) {
+    waitForAuth(3000).then(async (authData) => {
       if (!authData || !authData.user) {
         showError("You need to be logged in to use messages. Please log in and try again.");
         return;
       }
       const profile = authData.profile;
-      const displayName = profile && profile.stage_name ? profile.stage_name : (authData.user.first_name || authData.user.email || presetBuyer);
+      const displayName = profile && profile.stage_name ? profile.stage_name : (authData.user.first_name || authData.user.email || 'User');
+      const role = profile && profile.account_type === 'creator' ? 'creator' : 'buyer';
       currentUser = displayName;
-      currentRole = "buyer";
+      currentRole = role;
       identitySection.classList.add("hidden");
       chatApp.classList.remove("hidden");
-      loadConversations().then(() => {
-        startConversation(presetCreator, displayName);
-      }).catch(() => {
-        showError("Could not load your conversations. Please try again.");
-      });
+      try {
+        await startConversation(
+          role === 'creator' ? displayName : presetCreator,
+          role === 'creator' ? presetCreator : displayName
+        );
+      } catch (e) {
+        showError("Could not start the conversation. Please try again.");
+      }
     });
   } else {
     waitForAuth(3000).then((authData) => {
