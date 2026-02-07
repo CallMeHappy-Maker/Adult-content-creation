@@ -1,0 +1,102 @@
+MVP HARDENING CHECKLIST
+(Before inviting real creators or accepting real money)
+1. NON-NEGOTIABLES (Do Not Ship Without These)
+These are not “nice to have.” Skipping them creates legal, safety, or payment-processor failure risk.
+1.1 Clear Platform Role Definition (CRITICAL)
+You must explicitly define what you are — and are not.
+You are:
+A marketplace / listing platform
+A payment facilitator
+A messaging intermediary
+You are NOT:
+A producer of content
+A participant in in-person services
+An employer or agent of creators
+Action:
+Add a short, plain-language Platform Role Disclosure
+Shown at creator signup
+Linked in footer
+Referenced at checkout for in-person bookings
+This protects you legally and helps with Stripe reviews.
+1.2 Creator Legal Self-Attestation
+Before a creator can publish services or receive payments, require explicit confirmation that:
+They are 18+
+They own the rights to all content sold
+Their services comply with local laws
+No third parties appear without consent
+Action:
+Checkbox + timestamp + IP log
+Store acceptance version (v1, v2, etc.)
+This is lightweight but powerful if anything goes wrong.
+1.3 Payment Flow Guardrails (Stripe Survival Layer)
+Stripe is your choke point.
+Do immediately:
+Separate:
+Buyer payment
+Platform fee (15%)
+Creator payout (escrow-style if possible)
+Add delayed payout (e.g., 24–72h) for dispute handling
+Block payouts until:
+Creator profile complete
+Legal attestation accepted
+Do NOT:
+Let creators withdraw instantly
+Describe in-person services as “sex acts” anywhere in metadata
+Use neutral language: session, booking, appearance, time-based service.
+1.4 Age Gate Enforcement Consistency
+You already did this well — just ensure:
+Age gate is enforced server-side, not only UI
+Deep links still trigger verification
+Session persistence expires reasonably
+This matters if regulators or hosts review logs.
+2. HIGH-RISK FEATURES THAT NEED CONSTRAINTS (Not Removal)
+These features are fine — but only with rails.
+2.1 In-Person Session Safety Wrapper
+Treat this as your riskiest MVP feature.
+Minimum viable safety layer:
+No exact addresses stored or shown
+Location field = city / area only
+Mandatory acknowledgment:
+“Platform does not supervise or verify in-person interactions”
+Creator controls:
+Availability windows
+Cancellation buffer
+Manual confirmation option (approve before booking)
+Optional but strong:
+Auto-expire unpaid bookings
+Cooling-off period before confirmation
+2.2 Messaging System Guardrails
+You have moderation — now add user-visible boundaries.
+Add immediately:
+“Report” button on messages
+System warning when a message is blocked (not silent fail)
+Creator option: “Auto-block buyers after X violations”
+This reduces support load later.
+3. WHAT TO LOCK INTO DOCUMENTATION NOW
+These are decisions, not features.
+3.1 Service Taxonomy (Lock This Early)
+Your current service types are good. Lock them.
+Example:
+Custom content (asynchronous)
+Digital content bundles
+Live video calls
+Time-based in-person bookings
+Why it matters:
+Affects UI
+Affects moderation
+Affects legal classification
+Avoid letting creators invent free-text service types for now.
+3.2 Platform Fee Philosophy
+Document:
+15% platform fee (why)
+Stripe fees passed through
+Refund handling logic
+This prevents creator backlash later when scale begins.
+3.3 Moderation Authority
+Define:
+What triggers removal
+Who decides
+Appeal process (even if manual)
+Even a simple rule like:
+“Platform may suspend accounts at its discretion for safety or compliance reasons.”
+…is better than nothing.

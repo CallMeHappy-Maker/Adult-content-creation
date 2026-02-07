@@ -143,11 +143,29 @@ document.addEventListener("DOMContentLoaded", () => {
         const isSent = msg.sender_name === currentUser;
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (isSent ? "sent" : "received");
+
+        let reportBtn = '';
+        if (!isSent) {
+          reportBtn = `<button class="btn-report-msg" data-msg-id="${msg.id}" data-sender="${escapeHtml(msg.sender_name)}" title="Report this message">&#9873;</button>`;
+        }
+
         bubble.innerHTML = `
           <div>${escapeHtml(msg.content)}</div>
-          <div class="message-meta">${escapeHtml(msg.sender_name)} · ${formatTime(msg.created_at)}</div>
+          <div class="message-meta">
+            ${escapeHtml(msg.sender_name)} · ${formatTime(msg.created_at)}
+            ${reportBtn}
+          </div>
         `;
         messagesContainer.appendChild(bubble);
+      });
+
+      messagesContainer.querySelectorAll(".btn-report-msg").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const msgId = btn.getAttribute("data-msg-id");
+          const sender = btn.getAttribute("data-sender");
+          openReportModal(msgId, sender);
+        });
       });
 
       if (wasAtBottom || messages.length !== prevCount) {
@@ -156,6 +174,101 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
       console.error("Failed to load messages:", error);
     }
+  }
+
+  function openReportModal(messageId, senderName) {
+    let modal = document.getElementById("report-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "report-modal";
+      modal.className = "modal";
+      modal.innerHTML = `
+        <div class="modal-content report-modal-content">
+          <h3>Report Message</h3>
+          <p class="report-sender-info">Reporting a message from: <strong id="report-sender-name"></strong></p>
+          <label for="report-reason">Reason</label>
+          <select id="report-reason">
+            <option value="">Select a reason...</option>
+            <option value="harassment">Harassment or abuse</option>
+            <option value="coercion">Coercion or pressure</option>
+            <option value="threats">Threats or intimidation</option>
+            <option value="illegal_request">Illegal request</option>
+            <option value="off_platform">Off-platform contact attempt</option>
+            <option value="spam">Spam or unwanted content</option>
+            <option value="other">Other</option>
+          </select>
+          <label for="report-details">Additional details (optional)</label>
+          <textarea id="report-details" rows="3" placeholder="Describe what happened..."></textarea>
+          <div id="report-feedback" class="report-feedback"></div>
+          <div class="modal-actions">
+            <button id="submit-report-btn" class="btn-primary">Submit Report</button>
+            <button id="cancel-report-btn" class="btn-secondary">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    modal.classList.remove("hidden");
+    document.getElementById("report-sender-name").textContent = senderName;
+    document.getElementById("report-reason").value = "";
+    document.getElementById("report-details").value = "";
+    document.getElementById("report-feedback").textContent = "";
+
+    const submitBtn = document.getElementById("submit-report-btn");
+    const cancelBtn = document.getElementById("cancel-report-btn");
+
+    const newSubmit = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newSubmit, submitBtn);
+    const newCancel = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+    newCancel.addEventListener("click", () => modal.classList.add("hidden"));
+
+    newSubmit.addEventListener("click", async () => {
+      const reason = document.getElementById("report-reason").value;
+      const details = document.getElementById("report-details").value.trim();
+      const feedback = document.getElementById("report-feedback");
+
+      if (!reason) {
+        feedback.textContent = "Please select a reason.";
+        feedback.style.color = "#f55";
+        return;
+      }
+
+      newSubmit.disabled = true;
+      newSubmit.textContent = "Submitting...";
+
+      try {
+        const res = await fetch(`/api/messages/${messageId}/report`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reason,
+            details,
+            reporterName: currentUser,
+            reporterRole: currentRole
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          feedback.textContent = "Report submitted. Thank you for helping keep our community safe.";
+          feedback.style.color = "#0f0";
+          setTimeout(() => modal.classList.add("hidden"), 2000);
+        } else {
+          feedback.textContent = data.error || "Failed to submit report.";
+          feedback.style.color = "#f55";
+        }
+      } catch (err) {
+        feedback.textContent = "Failed to submit report. Please try again.";
+        feedback.style.color = "#f55";
+      }
+
+      newSubmit.disabled = false;
+      newSubmit.textContent = "Submit Report";
+    });
   }
 
   messageInput.addEventListener("input", () => {
@@ -195,7 +308,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (res.status === 403) {
         const data = await res.json();
-        moderationWarning.textContent = data.warning || "Message blocked: " + data.reason;
+        moderationWarning.className = "moderation-warning moderation-blocked";
+        moderationWarning.innerHTML = `<strong>Message Blocked:</strong> ${escapeHtml(data.warning || data.reason)}`;
         moderationWarning.classList.remove("hidden");
         messageInput.value = content;
         return;
@@ -203,6 +317,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!res.ok) {
         throw new Error("Failed to send");
+      }
+
+      const data = await res.json();
+
+      if (data.softWarning) {
+        moderationWarning.className = "moderation-warning moderation-soft-warning";
+        moderationWarning.innerHTML = `<strong>Warning:</strong> ${escapeHtml(data.warningMessage)}`;
+        moderationWarning.classList.remove("hidden");
+        setTimeout(() => moderationWarning.classList.add("hidden"), 8000);
       }
 
       await loadMessages(currentConversationId);

@@ -22,7 +22,7 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - Creator storefront pages showing services with pricing
 - Order flow with fee breakdown and in-person session booking (date/time/location)
 - Age verification gate on all pages
-- AI-moderated messaging (dual-layer: regex pre-filter + GPT-5-mini contextual detection)
+- AI-moderated messaging (dual-layer: regex pre-filter + GPT-5-mini contextual detection, intent-based flags, soft warnings before hard blocks, creator-side message reporting)
 - Creator sign-up page with DOB-based age verification and profile setup
 - Navigation bar linking pages (Home + auth nav area with login/verify/messages/admin)
 - Dark theme (black/#8B0000 dark red/#CC0033 lipstick red)

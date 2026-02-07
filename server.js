@@ -544,33 +544,45 @@ app.post('/api/profile/upload-id', isAuthenticated, async (req, res) => {
 
 app.use(express.static(path.join(__dirname)));
 
+const SEVERITY_LEVELS = {
+  off_platform: 'medium',
+  harassment: 'high',
+  coercion: 'severe',
+  illegal_request: 'severe',
+  threats: 'severe',
+  spam: 'low',
+};
+
+const HARD_BLOCK_CATEGORIES = ['coercion', 'illegal_request', 'threats', 'harassment'];
+const WARNINGS_BEFORE_BLOCK = 2;
+
 function regexPreFilter(content) {
   const lower = content.toLowerCase();
   const patterns = [
-    { regex: /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/, reason: "Phone number detected" },
-    { regex: /\(\d{3}\)\s*\d{3}[-.\s]?\d{4}/, reason: "Phone number detected" },
-    { regex: /\+\d{1,3}\s?\d{6,}/, reason: "Phone number detected" },
-    { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, reason: "Email address detected" },
-    { regex: /(?:https?:\/\/|www\.)[^\s]+/i, reason: "URL/link detected" },
-    { regex: /@[a-zA-Z0-9_]{2,}/, reason: "Social media handle detected" },
+    { regex: /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/, reason: "Phone number detected", category: "off_platform" },
+    { regex: /\(\d{3}\)\s*\d{3}[-.\s]?\d{4}/, reason: "Phone number detected", category: "off_platform" },
+    { regex: /\+\d{1,3}\s?\d{6,}/, reason: "Phone number detected", category: "off_platform" },
+    { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, reason: "Email address detected", category: "off_platform" },
+    { regex: /(?:https?:\/\/|www\.)[^\s]+/i, reason: "URL/link detected", category: "off_platform" },
+    { regex: /@[a-zA-Z0-9_]{2,}/, reason: "Social media handle detected", category: "off_platform" },
   ];
 
   const keywords = [
-    { terms: ["whatsapp", "telegram", "signal app", "kik me", "snapchat", "my snap", "add me on snap", "ig is", "my insta", "find me on"], reason: "Messaging/social media app reference" },
-    { terms: ["text me", "call me", "dm me", "message me on", "hit me up on", "reach me at", "contact me at", "hmu on"], reason: "Off-platform contact attempt" },
-    { terms: ["venmo me", "cashapp me", "paypal me", "zelle me", "send to my venmo", "send to my cashapp", "pay me directly", "pay outside"], reason: "Off-platform payment attempt" },
+    { terms: ["whatsapp", "telegram", "signal app", "kik me", "snapchat", "my snap", "add me on snap", "ig is", "my insta", "find me on"], reason: "Messaging/social media app reference", category: "off_platform" },
+    { terms: ["text me", "call me", "dm me", "message me on", "hit me up on", "reach me at", "contact me at", "hmu on"], reason: "Off-platform contact attempt", category: "off_platform" },
+    { terms: ["venmo me", "cashapp me", "paypal me", "zelle me", "send to my venmo", "send to my cashapp", "pay me directly", "pay outside"], reason: "Off-platform payment attempt", category: "off_platform" },
   ];
 
   for (const p of patterns) {
     if (p.regex.test(content)) {
-      return { allowed: false, reason: p.reason };
+      return { allowed: false, reason: p.reason, category: p.category, severity: SEVERITY_LEVELS[p.category] || 'medium' };
     }
   }
 
   for (const k of keywords) {
     for (const term of k.terms) {
       if (lower.includes(term)) {
-        return { allowed: false, reason: k.reason };
+        return { allowed: false, reason: k.reason, category: k.category, severity: SEVERITY_LEVELS[k.category] || 'medium' };
       }
     }
   }
@@ -590,50 +602,103 @@ async function moderateMessage(content, senderName, senderType) {
       messages: [
         {
           role: "system",
-          content: `You are a strict content moderation system for an adult content creator marketplace. Your ONLY job is to detect and BLOCK any attempt to take business OFF the platform.
+          content: `You are a content moderation system for an adult content creator marketplace. Detect policy violations across multiple categories.
 
-You MUST block messages containing:
-- Phone numbers in ANY format (including spelled out like "five five five")
-- Email addresses (including disguised like "user at gmail dot com")
-- Social media handles or usernames
-- References to external messaging apps (WhatsApp, Telegram, Signal, Kik, Snapchat, Instagram DMs, etc.)
-- Payment apps for direct payment (Venmo, CashApp, PayPal, Zelle)
-- Any invitation to communicate or transact outside this platform
-- URLs or links to personal websites/profiles
-- Coded language clearly intended to share contact info
+VIOLATION CATEGORIES (use these exact category names):
+
+1. "off_platform" — Attempts to take business off the platform:
+   - Phone numbers (any format, including spelled out)
+   - Email addresses (including disguised)
+   - Social media handles or external messaging apps
+   - Payment apps for direct payment (Venmo, CashApp, PayPal, Zelle)
+   - URLs or links to personal websites/profiles
+   - Coded language to share contact info
+
+2. "harassment" — Hostile, abusive, or degrading behavior:
+   - Insults, name-calling, or personal attacks
+   - Unwanted sexual advances after being declined
+   - Persistent unwanted contact or pressure
+   - Discriminatory language based on protected characteristics
+
+3. "coercion" — Attempts to pressure, manipulate, or force:
+   - Threats to leave bad reviews unless demands are met
+   - Pressuring someone to lower prices or do free work
+   - Emotional manipulation or guilt-tripping
+   - Blackmail or leverage threats
+   - Pressuring to do something outside stated boundaries
+
+4. "illegal_request" — Requests for illegal activities:
+   - Requests involving minors in any capacity
+   - Drug-related requests
+   - Requests for non-consensual acts
+   - Any clearly illegal activity
+
+5. "threats" — Direct or implied threats:
+   - Physical violence threats
+   - Stalking behavior or language
+   - Doxxing threats
+   - Intimidation
 
 ALLOW messages about:
 - Service inquiries, pricing, scheduling on this platform
-- Content requests and preferences
+- Content requests and preferences within legal bounds
 - In-person session logistics booked through this platform
 - General friendly conversation
+- Negotiation within platform boundaries
 
-Respond with ONLY this exact JSON format, nothing else:
+Respond with ONLY this exact JSON format:
 {"allowed":true}
 or
-{"allowed":false,"reason":"brief reason"}`
+{"allowed":false,"reason":"brief reason","category":"category_name"}`
         },
         {
           role: "user",
           content: `Moderate this ${senderType} message: "${content}"`
         }
       ],
-      max_completion_tokens: 100,
+      max_completion_tokens: 150,
     });
 
     const result = response.choices[0]?.message?.content || '{"allowed": true}';
     try {
       const cleaned = result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      return JSON.parse(cleaned);
+      const parsed = JSON.parse(cleaned);
+      if (!parsed.allowed && parsed.category) {
+        parsed.severity = SEVERITY_LEVELS[parsed.category] || 'medium';
+      }
+      return parsed;
     } catch {
       if (result.toLowerCase().includes('"allowed":false') || result.toLowerCase().includes('"allowed": false')) {
-        return { allowed: false, reason: "Potential policy violation detected" };
+        return { allowed: false, reason: "Potential policy violation detected", category: "off_platform", severity: "medium" };
       }
       return { allowed: true };
     }
   } catch (error) {
     console.error('Moderation API error:', error.message);
     return { allowed: true };
+  }
+}
+
+async function getUserWarningCount(userName) {
+  try {
+    const result = await pool.query(
+      'SELECT COUNT(*) as count FROM user_warnings WHERE user_name = $1',
+      [userName]
+    );
+    return parseInt(result.rows[0].count);
+  } catch {
+    return 0;
+  }
+}
+
+async function addUserWarning(userName, conversationId, category, reason) {
+  try {
+    await pool.query(
+      'INSERT INTO user_warnings (user_name, conversation_id, violation_category, violation_reason) VALUES ($1, $2, $3, $4)',
+      [userName, conversationId, category, reason]
+    );
+  } catch (err) {
+    console.error('Error adding warning:', err);
   }
 }
 
@@ -729,15 +794,56 @@ app.post('/api/conversations/:id/messages', isAuthenticated, isVerifiedUser, asy
     const moderation = await moderateMessage(content, senderName, senderType);
 
     if (!moderation.allowed) {
+      const category = moderation.category || 'off_platform';
+      const severity = moderation.severity || SEVERITY_LEVELS[category] || 'medium';
+      const isSevere = HARD_BLOCK_CATEGORIES.includes(category) || severity === 'severe';
+      const warningCount = await getUserWarningCount(senderName);
+
       await pool.query(
-        'INSERT INTO moderation_logs (conversation_id, message_content, sender_type, sender_name, violation_type, action_taken) VALUES ($1, $2, $3, $4, $5, $6)',
-        [id, content, senderType, senderName, moderation.reason, 'blocked']
+        'INSERT INTO moderation_logs (conversation_id, message_content, sender_type, sender_name, violation_type, action_taken, violation_category, severity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [id, content, senderType, senderName, moderation.reason, isSevere || warningCount >= WARNINGS_BEFORE_BLOCK ? 'blocked' : 'warned', category, severity]
       );
 
-      return res.status(403).json({
-        error: 'Message blocked by moderation',
-        reason: moderation.reason,
-        warning: 'Sharing contact information or attempting to take business off-platform is not allowed. Repeated violations may result in account restrictions.'
+      if (isSevere) {
+        await addUserWarning(senderName, parseInt(id), category, moderation.reason);
+        return res.status(403).json({
+          error: 'Message blocked by moderation',
+          reason: moderation.reason,
+          category: category,
+          action: 'blocked',
+          warning: 'This message has been blocked due to a serious policy violation. Continued violations will result in account suspension.'
+        });
+      }
+
+      if (warningCount >= WARNINGS_BEFORE_BLOCK) {
+        await addUserWarning(senderName, parseInt(id), category, moderation.reason);
+        return res.status(403).json({
+          error: 'Message blocked by moderation',
+          reason: moderation.reason,
+          category: category,
+          action: 'blocked',
+          warning: `You have received multiple warnings. This message has been blocked. Please review our community guidelines.`
+        });
+      }
+
+      await addUserWarning(senderName, parseInt(id), category, moderation.reason);
+
+      const result = await pool.query(
+        'INSERT INTO messages (conversation_id, sender_type, sender_name, content) VALUES ($1, $2, $3, $4) RETURNING *',
+        [id, senderType, senderName, content]
+      );
+
+      await pool.query(
+        'UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+        [id]
+      );
+
+      return res.status(201).json({
+        ...result.rows[0],
+        softWarning: true,
+        warningMessage: `Heads up: Your message may violate our guidelines (${moderation.reason}). This is warning ${warningCount + 1} of ${WARNINGS_BEFORE_BLOCK}. After ${WARNINGS_BEFORE_BLOCK} warnings, messages will be blocked.`,
+        warningCategory: category,
+        warningsRemaining: WARNINGS_BEFORE_BLOCK - warningCount - 1
       });
     }
 
@@ -767,6 +873,59 @@ app.get('/api/moderation-logs', async (req, res) => {
   } catch (error) {
     console.error('Error fetching moderation logs:', error);
     res.status(500).json({ error: 'Failed to fetch moderation logs' });
+  }
+});
+
+app.post('/api/messages/:messageId/report', isAuthenticated, isVerifiedUser, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { reason, details, reporterName, reporterRole } = req.body;
+
+    if (!reason || !reporterName) {
+      return res.status(400).json({ error: 'Reason and reporter name are required' });
+    }
+
+    const msgResult = await pool.query('SELECT * FROM messages WHERE id = $1', [messageId]);
+    if (msgResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    const msg = msgResult.rows[0];
+
+    const existing = await pool.query(
+      'SELECT id FROM message_reports WHERE message_id = $1 AND reporter_name = $2',
+      [messageId, reporterName]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'You have already reported this message' });
+    }
+
+    await pool.query(
+      'INSERT INTO message_reports (message_id, conversation_id, reporter_name, reporter_role, reported_user_name, reason, details) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [messageId, msg.conversation_id, reporterName, reporterRole || 'unknown', msg.sender_name, reason, details || null]
+    );
+
+    await pool.query(
+      'INSERT INTO moderation_logs (conversation_id, message_content, sender_type, sender_name, violation_type, action_taken, violation_category, severity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+      [msg.conversation_id, msg.content, msg.sender_type, msg.sender_name, `User report: ${reason}`, 'reported', 'user_report', 'medium']
+    );
+
+    res.json({ success: true, message: 'Report submitted. Our team will review it.' });
+  } catch (error) {
+    console.error('Error reporting message:', error);
+    res.status(500).json({ error: 'Failed to submit report' });
+  }
+});
+
+app.get('/api/admin/reports', isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM message_reports ORDER BY created_at DESC LIMIT 50'
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ error: 'Failed to fetch reports' });
   }
 });
 
