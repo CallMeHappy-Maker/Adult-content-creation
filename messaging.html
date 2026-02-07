@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Moderated Messaging Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0f0d;
+      color: #e0e0e0;
+    }
+
+    .hidden { display: none; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .modal {
+      background: #111;
+      border: 2px solid darkgreen;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .modal h2 { margin-top: 0; color: red; }
+    .modal input[type="text"] { width: 100%; margin-top: 10px; padding: 6px; }
+    .modal button { margin-top: 15px; width: 100%; padding: 8px; }
+
+    header {
+      background: black;
+      padding: 10px;
+      border-bottom: 2px solid darkgreen;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    main { display: flex; height: calc(100vh - 60px); }
+
+    .chat {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid darkgreen;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    .message { margin-bottom: 6px; }
+    .message.client { color: #9acd32; }
+    .message.creator { color: #ffffff; }
+    .message.system { color: red; }
+
+    .input-row { display: flex; padding: 10px; }
+    .input-row input { flex: 1; padding: 6px; }
+    .input-row button { margin-left: 6px; }
+
+    .admin {
+      flex: 1;
+      padding: 10px;
+      background: #111;
+    }
+
+    .admin ul { list-style: none; padding-left: 0; }
+    .admin li { font-size: 0.9em; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+<div id="consent-overlay" class="overlay">
+  <div class="modal">
+    <h2>Legal Consent & Age Verification</h2>
+    <p>
+      By continuing, you confirm you are 18+ and agree to platform monitoring,
+      moderation, and enforcement policies.
+    </p>
+
+    <label>
+      <input type="checkbox" id="agreeCheckbox">
+      I agree to the terms and conditions
+    </label>
+
+    <input type="text" id="signatureInput" placeholder="Type your full legal name">
+
+    <button id="acceptBtn" disabled>Accept & Continue</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+
+  <header>
+    <h1>Creator Messaging Console</h1>
+    <span id="stateBadge">STATE: ACTIVE</span>
+  </header>
+
+  <main>
+    <section class="chat">
+      <div id="messages" class="messages"></div>
+
+      <div class="input-row">
+        <input type="text" id="messageInput" placeholder="Type message...">
+        <button id="sendBtn">Send</button>
+      </div>
+    </section>
+
+    <aside class="admin">
+      <h3>Review Queue</h3>
+      <ul id="reviewQueue"></ul>
+
+      <h3>Audit Log</h3>
+      <ul id="auditLog"></ul>
+    </aside>
+  </main>
+
+</div>
+
+<script>
+const overlay = document.getElementById("consent-overlay");
+const agree = document.getElementById("agreeCheckbox");
+const sig = document.getElementById("signatureInput");
+const accept = document.getElementById("acceptBtn");
+const app = document.getElementById("app");
+
+function validateConsent() {
+  accept.disabled = !(agree.checked && sig.value.trim().length >= 3);
+}
+
+agree.addEventListener("change", validateConsent);
+sig.addEventListener("input", validateConsent);
+
+accept.addEventListener("click", () => {
+  localStorage.setItem("msgConsent", JSON.stringify({
+    sig: sig.value,
+    time: new Date().toISOString()
+  }));
+  overlay.classList.add("hidden");
+  app.classList.remove("hidden");
+});
+
+if (localStorage.getItem("msgConsent")) {
+  overlay.classList.add("hidden");
+  app.classList.remove("hidden");
+}
+
+let state = "ACTIVE";
+let softCount = 0;
+let auditLog = [];
+
+const messagesEl = document.getElementById("messages");
+const input = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
+const badge = document.getElementById("stateBadge");
+const reviewQueue = document.getElementById("reviewQueue");
+const auditList = document.getElementById("auditLog");
+
+function setState(s) {
+  state = s;
+  badge.textContent = `STATE: ${state}`;
+  if (state !== "ACTIVE") {
+    input.disabled = true;
+    sendBtn.disabled = true;
+  }
+}
+
+function log(event) {
+  const entry = { event, time: new Date().toISOString() };
+  auditLog.push(entry);
+
+  const li = document.createElement("li");
+  li.textContent = `${entry.time} – ${event}`;
+  auditList.appendChild(li);
+}
+
+function addMessage(text, type) {
+  const d = document.createElement("div");
+  d.className = `message ${type}`;
+  d.textContent = text;
+  messagesEl.appendChild(d);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+addMessage("Client: Hello, I have a question.", "client");
+
+const hardWords = ["cash","gift card","paypal","venmo","zelle","telegram","whatsapp"];
+const softWords = ["outside","off platform","privately","another way"];
+
+function obfuscatedNumber(t) {
+  return /(\d\s+){3,}\d/.test(t) || /(\d[a-zA-Z]\d){2,}/.test(t);
+}
+
+function aiModerationStub(text) {
+  if (text.includes("meet") || text.includes("address")) return "RISK";
+  return "CLEAR";
+}
+
+sendBtn.addEventListener("click", () => {
+  const text = input.value.trim().toLowerCase();
+  if (!text) return;
+
+  if (text === "stop") {
+    addMessage("Conversation closed by creator.", "system");
+    log("Creator STOP");
+    setState("CLOSED_CREATOR");
+    return;
+  }
+
+  if (obfuscatedNumber(text) || hardWords.some(w => text.includes(w))) {
+    addMessage("Conversation paused: policy violation.", "system");
+    reviewQueue.innerHTML += "<li>Hard violation detected</li>";
+    log("Hard violation");
+    setState("PAUSED");
+    return;
+  }
+
+  if (softWords.some(w => text.includes(w))) {
+    softCount++;
+    if (softCount >= 2) {
+      addMessage("Repeated policy risk. Conversation paused.", "system");
+      reviewQueue.innerHTML += "<li>Escalated soft violations</li>";
+      log("Soft escalation");
+      setState("PAUSED");
+      return;
+    } else {
+      addMessage("Warning: message may violate policy.", "system");
+      log("Soft warning");
+    }
+  }
+
+  if (aiModerationStub(text) === "RISK") {
+    reviewQueue.innerHTML += "<li>AI flagged message</li>";
+    log("AI risk flag");
+  }
+
+  addMessage(`Creator: ${text}`, "creator");
+  input.value = "";
+});
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendBtn.click();
+});
+</script>
+
+</body>
+</html>
