@@ -24,8 +24,8 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - Age verification gate on all pages
 - AI-moderated messaging (dual-layer: regex pre-filter + GPT-5-mini contextual detection)
 - Creator sign-up page with DOB-based age verification and profile setup
-- Navigation bar linking all pages (Home, Creators, Sign Up, Messages)
-- Dark theme (black/#8B0000 dark red/#0ff cyan)
+- Navigation bar linking pages (Home + auth nav area with login/verify/messages/admin)
+- Dark theme (black/#8B0000 dark red/#CC0033 lipstick red)
 - Built with plain HTML, CSS, and vanilla JavaScript
 - Served by Express.js on port 5000
 - User authentication via Replit OIDC (OpenID Connect) with Passport.js
