@@ -252,6 +252,112 @@ async function isVerifiedUser(req, res, next) {
   }
 }
 
+const ADMIN_NAMES = [{ first: 'christopher', last: 'barr' }];
+
+function isAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const adminIds = (process.env.ADMIN_USER_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (adminIds.length > 0 && adminIds.includes(req.user.id)) {
+    return next();
+  }
+
+  const firstName = (req.user.first_name || '').toLowerCase().trim();
+  const lastName = (req.user.last_name || '').toLowerCase().trim();
+  const match = ADMIN_NAMES.some(a => a.first === firstName && a.last === lastName);
+  if (match) return next();
+  res.status(403).json({ error: 'Admin access required' });
+}
+
+app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const users = await pool.query('SELECT COUNT(*) as count FROM users');
+    const verified = await pool.query("SELECT COUNT(*) as count FROM user_profiles WHERE verification_status IN ('submitted', 'verified')");
+    const creators = await pool.query("SELECT COUNT(*) as count FROM user_profiles WHERE account_type = 'creator'");
+    const buyers = await pool.query("SELECT COUNT(*) as count FROM user_profiles WHERE account_type = 'buyer'");
+    const conversations = await pool.query('SELECT COUNT(*) as count FROM conversations');
+    const messages = await pool.query('SELECT COUNT(*) as count FROM messages');
+    const stripeConnected = await pool.query("SELECT COUNT(*) as count FROM user_profiles WHERE stripe_onboarding_complete = true");
+
+    res.json({
+      totalUsers: parseInt(users.rows[0].count),
+      verifiedUsers: parseInt(verified.rows[0].count),
+      creators: parseInt(creators.rows[0].count),
+      buyers: parseInt(buyers.rows[0].count),
+      totalConversations: parseInt(conversations.rows[0].count),
+      totalMessages: parseInt(messages.rows[0].count),
+      stripeConnected: parseInt(stripeConnected.rows[0].count),
+    });
+  } catch (error) {
+    console.error('Admin stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+app.get('/api/admin/users', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT u.id, u.email, u.first_name, u.last_name, u.profile_image_url, u.created_at,
+        up.account_type, up.stage_name, up.verification_status, up.city, up.state, up.country,
+        up.stripe_connect_account_id, up.stripe_onboarding_complete,
+        (SELECT COUNT(*) FROM conversations WHERE creator_name = up.stage_name OR buyer_name = up.stage_name) as conversation_count,
+        (SELECT COUNT(*) FROM messages WHERE sender_name = up.stage_name) as message_count
+      FROM users u
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      ORDER BY u.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Admin users error:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.delete('/api/admin/users/:id', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (id === req.user.id) {
+      return res.status(400).json({ error: 'Cannot remove your own account' });
+    }
+    const profile = await pool.query('SELECT stage_name FROM user_profiles WHERE user_id = $1', [id]);
+    const stageName = profile.rows[0]?.stage_name;
+
+    if (stageName) {
+      await pool.query('DELETE FROM messages WHERE sender_name = $1', [stageName]);
+      await pool.query('DELETE FROM conversations WHERE creator_name = $1 OR buyer_name = $1', [stageName]);
+    }
+    await pool.query('DELETE FROM user_profiles WHERE user_id = $1', [id]);
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin delete user error:', error);
+    res.status(500).json({ error: 'Failed to remove user' });
+  }
+});
+
+app.get('/api/admin/messages', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT c.id, c.creator_name, c.buyer_name, c.created_at,
+        (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id) as message_count,
+        (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+        (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_at
+      FROM conversations c
+      ORDER BY c.updated_at DESC
+      LIMIT 50
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Admin messages error:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+app.get('/api/admin/check', isAuthenticated, isAdmin, (req, res) => {
+  res.json({ isAdmin: true });
+});
+
 app.get('/api/profile', isAuthenticated, async (req, res) => {
   try {
     const result = await pool.query(

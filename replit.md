@@ -35,22 +35,26 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - Stripe integration: buyer checkout sessions, creator Connect onboarding for payouts
 - Access control: messaging, ordering, and creator setup require verified accounts
 - Server-side auth middleware on all sensitive API routes
+- Admin dashboard for user management, platform stats, message overview
+- Messages link only visible to logged-in users (in auth nav area, not main nav)
 
 ## Project Architecture
 - `index.html` — Marketplace landing page with hero section and featured creators grid
 - `signup.html` — Creator sign-up page with DOB age verification and profile setup (stage name, profile pic, bio, specialties)
 - `creators.html` — Creator registration form + public storefront with services and ordering
 - `verify.html` — Identity verification page (account type, legal identity, DOB, location, ID upload, bio, specialties)
-- `messaging.html` — Moderated messaging console with consent overlay
+- `chat.html` — Moderated messaging console with AI moderation
+- `admin.html` — Admin dashboard (user management, stats, message overview) — admin-only access
 - `css/style.css` — Dark theme styling (black background, dark red accents, cyan highlights)
 - `js/age-gate.js` — Age gate toggle logic (button-based, used on index/creators/messaging)
-- `js/auth.js` — Client-side auth utilities (initAuth, getCurrentUser, requireAuth, updateNavAuth)
-- `js/verify.js` — Verification page logic (form validation, ID upload, profile submission)
+- `js/auth.js` — Client-side auth utilities (initAuth, getCurrentUser, requireAuth, requireVerified, updateNavAuth, checkAdminStatus)
+- `js/verify.js` — Verification page logic (form validation, ID upload, profile submission, Stripe Connect setup)
+- `js/admin.js` — Admin dashboard logic (stats, user management, message overview, user removal)
 - `js/signup.js` — Creator sign-up logic (DOB verification, profile pic upload, specialties, localStorage save)
 - `js/marketplace.js` — Landing page logic (loads creator cards from localStorage)
 - `js/creators.js` — Creator registration, storefront rendering, ordering with fee calculation
 - `js/checkout.js` — Shared checkout/fee calculation utilities (legacy, functions duplicated in creators.js)
-- `server.js` — Express.js server on port 5000 with OIDC auth, session management, profile/auth APIs, messaging APIs
+- `server.js` — Express.js server on port 5000 with OIDC auth, session management, profile/auth APIs, messaging APIs, admin APIs
 - `docs/` — Trust & safety, compliance documentation, conversation history
 - `legal/` — Terms of service, privacy policy, disclaimer placeholders
 

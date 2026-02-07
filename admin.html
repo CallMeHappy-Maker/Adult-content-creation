@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard - Adult Content Marketplace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<script defer src="js/auth.js"></script>
+<script defer src="js/admin.js"></script>
+</head>
+<body>
+<div id="main-content">
+  <header>
+    <h1>Adult Content Marketplace</h1>
+    <p>Admin Dashboard</p>
+    <nav id="main-nav">
+      <a href="/">Home</a>
+      <a href="/creators.html">Creators</a>
+      <div id="auth-nav"></div>
+    </nav>
+  </header>
+
+  <main>
+    <div id="admin-loading" class="admin-loading">
+      <p>Checking admin access...</p>
+    </div>
+
+    <div id="admin-denied" class="hidden">
+      <div class="admin-denied-box">
+        <h2>Access Denied</h2>
+        <p>You do not have admin privileges.</p>
+        <a href="/" class="btn-primary">Go to Marketplace</a>
+      </div>
+    </div>
+
+    <div id="admin-dashboard" class="hidden">
+      <section class="admin-stats">
+        <h2>Platform Overview</h2>
+        <div class="stats-grid" id="stats-grid"></div>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-header">
+          <h2>User Management</h2>
+          <span class="admin-count" id="user-count"></span>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="users-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Location</th>
+                <th>Messages</th>
+                <th>Stripe</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-header">
+          <h2>Recent Conversations</h2>
+          <span class="admin-count" id="convo-count"></span>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="messages-table">
+            <thead>
+              <tr>
+                <th>Creator</th>
+                <th>Buyer</th>
+                <th>Messages</th>
+                <th>Last Message</th>
+                <th>Started</th>
+              </tr>
+            </thead>
+            <tbody id="messages-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

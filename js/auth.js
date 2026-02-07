@@ -102,11 +102,29 @@ function updateNavAuth(data) {
       verifyLink = `<a href="/verify.html" class="auth-nav-verify">Verify</a>`;
     }
 
+    let messagesLink = `<a href="/chat.html" class="auth-nav-link">Messages</a>`;
+
+    let adminLink = '';
+    checkAdminStatus().then(isAdminUser => {
+      if (isAdminUser) {
+        const adminEl = document.createElement('a');
+        adminEl.href = '/admin.html';
+        adminEl.className = 'auth-nav-admin';
+        adminEl.textContent = 'Admin';
+        const navUser = authNav.querySelector('.auth-nav-user');
+        if (navUser) {
+          const logoutLink = navUser.querySelector('.auth-nav-logout');
+          if (logoutLink) navUser.insertBefore(adminEl, logoutLink);
+        }
+      }
+    });
+
     authNav.innerHTML = `
       <div class="auth-nav-user">
         ${avatarHtml}
         <span class="auth-nav-name">${escapeHtmlAuth(displayName)}</span>
         ${verifyLink}
+        ${messagesLink}
         <a href="/api/logout" class="auth-nav-logout">Log Out</a>
       </div>
     `;
@@ -114,6 +132,19 @@ function updateNavAuth(data) {
     authNav.innerHTML = `
       <a href="/api/login" class="auth-nav-login">Log In</a>
     `;
+  }
+}
+
+async function checkAdminStatus() {
+  try {
+    const res = await fetch('/api/admin/check');
+    if (res.ok) {
+      const data = await res.json();
+      return data.isAdmin === true;
+    }
+    return false;
+  } catch {
+    return false;
   }
 }
 
