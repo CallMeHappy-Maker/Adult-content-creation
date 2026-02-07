@@ -86,23 +86,30 @@ main {
 }
 
 .hero {
-  max-width: 700px;
-  margin: 2rem auto;
+  max-width: 100%;
+  margin: 0;
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 4rem 1.5rem;
+  background: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.75)), url('/images/hero-banner.png') center center / cover no-repeat;
+  position: relative;
 }
 
 .hero h2 {
   color: #0ff;
   font-size: 1.8rem;
   margin-bottom: 0.75rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
 }
 
 .hero p {
-  color: #aaa;
+  color: #ddd;
   font-size: 1rem;
   line-height: 1.6;
   margin-bottom: 1.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
 .btn-primary {
