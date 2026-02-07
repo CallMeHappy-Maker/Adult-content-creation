@@ -33,6 +33,20 @@
     </div>
 
     <div id="admin-dashboard" class="hidden">
+      <section class="admin-section">
+        <h2>Platform Controls</h2>
+        <div class="kill-switch-panel">
+          <div class="kill-switch-row">
+            <div>
+              <strong>Pause Availability Bookings</strong>
+              <p class="field-hint">Globally disable all time-based/availability bookings. Use for Stripe inquiries, legal concerns, or safety incidents. Historical data is preserved.</p>
+            </div>
+            <button id="kill-switch-btn" class="btn-danger" onclick="toggleKillSwitch()">Loading...</button>
+          </div>
+          <p id="kill-switch-status" class="field-hint"></p>
+        </div>
+      </section>
+
       <section class="admin-stats">
         <h2>Platform Overview</h2>
         <div class="stats-grid" id="stats-grid"></div>

@@ -96,7 +96,8 @@
           <input type="email" id="buyer-email" placeholder="email@example.com" required>
 
           <label for="buyer-details">Request Details</label>
-          <textarea id="buyer-details" rows="3" placeholder="Describe exactly what you want..."></textarea>
+          <textarea id="buyer-details" rows="3" maxlength="500" placeholder="Describe what you'd like (max 500 characters). Do not include addresses or personal contact info."></textarea>
+          <p class="field-hint" id="buyer-details-hint">0/500 characters</p>
 
           <div id="in-person-fields" class="hidden">
             <div id="in-person-creator-area" class="in-person-area-info"></div>
@@ -107,21 +108,21 @@
             <label for="session-time">Preferred Time</label>
             <input type="time" id="session-time">
 
-            <p class="in-person-location-note">Exact meeting details will be arranged directly between you and the creator after booking is confirmed.</p>
+            <p class="in-person-location-note">Scheduling details will be arranged directly between you and the creator after the booking request is confirmed.</p>
 
             <div id="safety-checklist" class="safety-checklist">
               <h4>Safety Checklist</h4>
               <p class="safety-intro">You must acknowledge each item before proceeding:</p>
-              <label class="safety-item"><input type="checkbox" class="safety-cb" value="1"> I understand this platform only facilitates introductions and scheduling — it does not arrange, supervise, or take responsibility for in-person meetings.</label>
+              <label class="safety-item"><input type="checkbox" class="safety-cb" value="1"> I understand this platform only facilitates introductions and scheduling — it does not arrange, supervise, or take responsibility for scheduled appearances.</label>
               <label class="safety-item"><input type="checkbox" class="safety-cb" value="2"> I will meet in a public place for the first meeting.</label>
               <label class="safety-item"><input type="checkbox" class="safety-cb" value="3"> I will share my plans (who, where, when) with a trusted person before attending.</label>
-              <label class="safety-item"><input type="checkbox" class="safety-cb" value="4"> I understand I am solely responsible for my own safety and decisions during any in-person interaction.</label>
+              <label class="safety-item"><input type="checkbox" class="safety-cb" value="4"> I understand I am solely responsible for my own safety and decisions during any scheduled interaction.</label>
               <label class="safety-item"><input type="checkbox" class="safety-cb" value="5"> I confirm I am entering this arrangement voluntarily and of my own free will.</label>
             </div>
           </div>
 
           <div id="platform-disclaimer" class="platform-disclaimer hidden">
-            <p><strong>Platform Disclaimer:</strong> This platform serves solely as an introduction and scheduling service. We do not facilitate, supervise, endorse, or assume any liability for in-person meetings arranged through this service. All parties are independently responsible for their own safety, conduct, and compliance with applicable laws. By proceeding, you acknowledge and accept these terms.</p>
+            <p><strong>Platform Disclaimer:</strong> The platform enables time-based availability listings and booking requests between independent parties. The platform does not supervise, verify, or participate in any scheduled appearances. All interactions occur independently between users. All parties are solely responsible for their own safety, conduct, and compliance with applicable laws. By proceeding, you acknowledge and accept these terms.</p>
           </div>
 
           <div class="fee-breakdown">

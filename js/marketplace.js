@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const serviceTypeLabels = {
     "custom-video": "Custom Video",
     "custom-photos": "Custom Photos",
-    "in-person": "In-Person Session",
+    "in-person": "Availability Booking",
     "video-call": "Video Call"
   };
 

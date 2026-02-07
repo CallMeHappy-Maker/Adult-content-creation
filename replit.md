@@ -29,12 +29,13 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - Built with plain HTML, CSS, and vanilla JavaScript
 - Served by Express.js on port 5000
 - User authentication via Replit OIDC (OpenID Connect) with Passport.js
-- PostgreSQL database for users, sessions, profiles, conversations, messages, attestations, creator settings
+- PostgreSQL database for users, sessions, profiles, conversations, messages, attestations, creator settings, booking disclaimers, platform settings
 - Identity verification system with ID document upload (base64 storage)
 - Profile management (account type, legal identity, display name, location, bio, specialties)
 - Creator Legal Self-Attestation (18+, content rights, legal compliance, consent) with timestamp + IP + version tracking
 - Stripe integration: buyer checkout sessions, creator Connect onboarding with delayed payouts (72h), payout guards
-- Payment flow guardrails: payouts blocked until profile complete + attestation accepted, neutral Stripe metadata
+- Payment flow guardrails: payouts blocked until profile complete + attestation accepted, neutral Stripe metadata, booking disclaimer required for availability bookings
+- In-person session hardening: neutral terminology ("availability booking"), booking disclaimer logging with IP/timestamp, Stripe metadata (time_based_booking), address detection/blocking, emergency kill switch for admin
 - Access control: messaging, ordering, and creator setup require verified accounts
 - Server-side auth middleware on all sensitive API routes
 - Admin dashboard for user management, platform stats, message overview
@@ -133,6 +134,7 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - `node server.js` — starts the app on port 5000
 
 ## Recent Changes
+- 2026-02-07: In-person hardening — Neutral terminology, booking disclaimer logging, address detection/blocking, emergency kill switch, Stripe metadata (time_based_booking), wired checkout flow
 - 2026-02-07: MVP Hardening — Platform Policies page, Fee Philosophy page, site footer on all pages
 - 2026-02-07: MVP Hardening — Creator Legal Self-Attestation (18+, content rights, legal compliance, consent) with timestamp + IP + version
 - 2026-02-07: MVP Hardening — Payment guardrails: delayed payouts (72h), payout blocking until profile + attestation, neutral Stripe metadata

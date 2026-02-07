@@ -9,14 +9,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const serviceTypeLabels = {
     "custom-video": "Custom Video",
     "custom-photos": "Custom Photos",
-    "in-person": "In-Person Session",
+    "in-person": "Availability Booking",
     "video-call": "Video Call"
   };
 
   const serviceTypeIcons = {
     "custom-video": "🎬",
     "custom-photos": "📸",
-    "in-person": "🤝",
+    "in-person": "📅",
     "video-call": "📹"
   };
 
@@ -270,7 +270,18 @@ document.addEventListener("DOMContentLoaded", () => {
     headerEl.appendChild(msgLink);
 
     const servicesContainer = document.getElementById("storefront-services");
-    const services = profile.services || [];
+    let services = profile.services || [];
+
+    let bookingsPaused = false;
+    try {
+      const ksRes = await fetch('/api/platform-settings/pause_availability_bookings');
+      const ksData = await ksRes.json();
+      bookingsPaused = ksData.value === 'true';
+    } catch (e) {}
+
+    if (bookingsPaused) {
+      services = services.filter(s => s.type !== 'in-person');
+    }
 
     if (services.length === 0) {
       servicesContainer.innerHTML = '<p style="color:#888;">This creator has no services listed yet.</p>';
@@ -301,14 +312,48 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function openOrderForm(profile, service) {
+  function containsAddress(text) {
+    const addressPatterns = [
+      /\d{1,5}\s+\w+\s+(st|street|ave|avenue|blvd|boulevard|rd|road|dr|drive|ln|lane|ct|court|way|pl|place)\b/i,
+      /\b(apt|apartment|suite|unit|#)\s*\d+/i,
+      /\b\d{5}(-\d{4})?\b/,
+    ];
+    return addressPatterns.some(p => p.test(text));
+  }
+
+  const detailsInput = document.getElementById("buyer-details");
+  const detailsHint = document.getElementById("buyer-details-hint");
+  if (detailsInput && detailsHint) {
+    detailsInput.addEventListener("input", () => {
+      detailsHint.textContent = `${detailsInput.value.length}/500 characters`;
+    });
+  }
+
+  async function openOrderForm(profile, service) {
     const container = document.getElementById("order-form-container");
+    let orderFeedback = document.getElementById("order-feedback");
+
+    const isInPerson = service.type === "in-person";
+
+    if (isInPerson) {
+      try {
+        const ksRes = await fetch('/api/platform-settings/pause_availability_bookings');
+        const ksData = await ksRes.json();
+        if (ksData.value === 'true') {
+          orderFeedback.textContent = "Availability bookings are temporarily paused. Please check back later.";
+          orderFeedback.style.color = "#f55";
+          container.classList.remove("hidden");
+          container.scrollIntoView({ behavior: "smooth" });
+          return;
+        }
+      } catch (e) {}
+    }
+
     container.classList.remove("hidden");
     container.scrollIntoView({ behavior: "smooth" });
 
     document.getElementById("order-service-name").textContent = `Ordering: ${service.title} from ${profile.name}`;
 
-    const isInPerson = service.type === "in-person";
     const inPersonFields = document.getElementById("in-person-fields");
     const disclaimerEl = document.getElementById("platform-disclaimer");
 
@@ -361,7 +406,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const placeOrderBtn = document.getElementById("place-order-btn");
     const cancelOrderBtn = document.getElementById("cancel-order-btn");
-    const orderFeedback = document.getElementById("order-feedback");
+    orderFeedback = document.getElementById("order-feedback");
 
     const newPlaceBtn = placeOrderBtn.cloneNode(true);
     placeOrderBtn.parentNode.replaceChild(newPlaceBtn, placeOrderBtn);
@@ -377,17 +422,24 @@ document.addEventListener("DOMContentLoaded", () => {
       orderFeedback.textContent = "";
     });
 
-    newPlaceBtn.addEventListener("click", () => {
+    newPlaceBtn.addEventListener("click", async () => {
       const buyerName = document.getElementById("buyer-name").value.trim();
       const buyerEmail = document.getElementById("buyer-email").value.trim();
 
       if (!buyerName) { orderFeedback.textContent = "Your name is required."; orderFeedback.style.color = "#f55"; return; }
       if (!buyerEmail) { orderFeedback.textContent = "Your email is required."; orderFeedback.style.color = "#f55"; return; }
 
+      const buyerDetailsVal = document.getElementById("buyer-details").value.trim();
+      if (containsAddress(buyerDetailsVal)) {
+        orderFeedback.textContent = "Please do not include street addresses, apartment numbers, or zip codes in your request details. Location arrangements should happen off-platform.";
+        orderFeedback.style.color = "#f55";
+        return;
+      }
+
       if (isInPerson) {
         const allChecked = Array.from(document.querySelectorAll(".safety-cb")).every(cb => cb.checked);
         if (!allChecked) {
-          orderFeedback.textContent = "You must accept all safety checklist items before booking an in-person session.";
+          orderFeedback.textContent = "You must accept all safety checklist items before placing an availability booking.";
           orderFeedback.style.color = "#f55";
           document.getElementById("safety-checklist").scrollIntoView({ behavior: "smooth" });
           return;
@@ -397,10 +449,60 @@ document.addEventListener("DOMContentLoaded", () => {
       orderFeedback.textContent = "Processing order...";
       orderFeedback.style.color = "#0f0";
 
-      setTimeout(() => {
-        orderFeedback.textContent = "Order placed! Payment integration coming soon. The creator will be notified.";
-        orderFeedback.style.color = "#ff0";
-      }, 1500);
+      try {
+        if (isInPerson) {
+          const disclaimerRes = await fetch('/api/booking-disclaimer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              serviceType: service.type,
+              creatorName: profile.name,
+            })
+          });
+          if (!disclaimerRes.ok) {
+            const err = await disclaimerRes.json();
+            orderFeedback.textContent = err.error || 'Failed to log disclaimer acceptance.';
+            orderFeedback.style.color = "#f55";
+            return;
+          }
+        }
+
+        const buyerDetails = document.getElementById("buyer-details").value.trim();
+        const sessionDetails = {};
+        if (isInPerson) {
+          const locationParts = [profile.city, profile.state_province].filter(Boolean);
+          if (locationParts.length > 0) sessionDetails.city = locationParts[0];
+        }
+
+        const checkoutRes = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            serviceName: service.title,
+            creatorName: profile.name,
+            amount: Math.round(fees.total * 100),
+            description: `${service.title} from ${profile.name}`,
+            serviceType: service.type,
+            sessionDetails,
+          })
+        });
+
+        const checkoutData = await checkoutRes.json();
+        if (!checkoutRes.ok) {
+          orderFeedback.textContent = checkoutData.error || 'Failed to create checkout session.';
+          orderFeedback.style.color = "#f55";
+          return;
+        }
+
+        if (checkoutData.url) {
+          window.location.href = checkoutData.url;
+        } else {
+          orderFeedback.textContent = "Checkout session created. Redirecting...";
+        }
+      } catch (err) {
+        orderFeedback.textContent = "Something went wrong. Please try again.";
+        orderFeedback.style.color = "#f55";
+      }
     });
   }
 });

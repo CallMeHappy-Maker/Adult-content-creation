@@ -1106,11 +1106,76 @@ app.get('/api/stripe/publishable-key', async (req, res) => {
   }
 });
 
+app.post('/api/booking-disclaimer', isAuthenticated, isVerifiedUser, requireAgeVerification, async (req, res) => {
+  try {
+    const { serviceType, creatorName, bookingRef } = req.body;
+    if (!serviceType || !creatorName) {
+      return res.status(400).json({ error: 'Service type and creator name are required' });
+    }
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+    await pool.query(
+      'INSERT INTO booking_disclaimers (user_id, booking_ref, service_type, creator_name, disclaimer_version, ip_address) VALUES ($1, $2, $3, $4, $5, $6)',
+      [req.user.id, bookingRef || null, serviceType, creatorName, 'v1', ip]
+    );
+    res.json({ success: true, disclaimer_version: 'v1' });
+  } catch (error) {
+    console.error('Error logging booking disclaimer:', error);
+    res.status(500).json({ error: 'Failed to log disclaimer acceptance' });
+  }
+});
+
+app.get('/api/platform-settings/:key', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT value FROM platform_settings WHERE key = $1', [req.params.key]);
+    if (result.rows.length === 0) {
+      return res.json({ value: null });
+    }
+    res.json({ value: result.rows[0].value });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch setting' });
+  }
+});
+
+app.post('/api/admin/platform-settings', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    if (!key) return res.status(400).json({ error: 'Setting key is required' });
+
+    await pool.query(
+      `INSERT INTO platform_settings (key, value, updated_at, updated_by)
+       VALUES ($1, $2, CURRENT_TIMESTAMP, $3)
+       ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP, updated_by = $3`,
+      [key, value, req.user.id]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating platform setting:', error);
+    res.status(500).json({ error: 'Failed to update setting' });
+  }
+});
+
 app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, requireAgeVerification, async (req, res) => {
   try {
-    const { serviceName, creatorName, amount, description, sessionDetails } = req.body;
+    const { serviceName, creatorName, amount, description, sessionDetails, serviceType } = req.body;
     const stripe = await getStripeClient();
     const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    const isTimeBased = serviceType === 'in-person';
+
+    if (isTimeBased) {
+      const killSwitch = await pool.query("SELECT value FROM platform_settings WHERE key = 'pause_availability_bookings'");
+      if (killSwitch.rows.length > 0 && killSwitch.rows[0].value === 'true') {
+        return res.status(403).json({ error: 'Availability bookings are temporarily paused. Please try again later.' });
+      }
+
+      const disclaimerCheck = await pool.query(
+        'SELECT id FROM booking_disclaimers WHERE user_id = $1 AND creator_name = $2 AND accepted_at > NOW() - INTERVAL \'24 hours\'',
+        [req.user.id, creatorName]
+      );
+      if (disclaimerCheck.rows.length === 0) {
+        return res.status(403).json({ error: 'You must accept the booking disclaimer before proceeding.' });
+      }
+    }
 
     const creatorProfile = await pool.query(
       'SELECT user_id, stripe_connect_account_id, stripe_onboarding_complete FROM user_profiles WHERE stage_name = $1 AND account_type = $2',
@@ -1137,6 +1202,7 @@ app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, requireAgeVeri
     }
 
     const platformFee = Math.round(amount * 0.15);
+    const bookingRef = `bk_${Date.now()}`;
 
     const neutralServiceName = serviceName
       .replace(/\b(sex|sexual|nude|naked|explicit)\b/gi, 'custom')
@@ -1144,6 +1210,24 @@ app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, requireAgeVeri
     const neutralDescription = (description || `Service booking from ${creatorName}`)
       .replace(/\b(sex|sexual|nude|naked|explicit)\b/gi, 'custom')
       .replace(/\b(escort|escorting)\b/gi, 'appearance');
+
+    const metadata = {
+      creator_name: creatorName,
+      buyer_id: req.user.id,
+      booking_ref: bookingRef,
+    };
+
+    if (isTimeBased) {
+      metadata.service_type = 'time_based_booking';
+      if (sessionDetails && sessionDetails.city) {
+        metadata.city = sessionDetails.city;
+      }
+      if (sessionDetails && sessionDetails.duration) {
+        metadata.duration_minutes = String(sessionDetails.duration);
+      }
+    } else {
+      metadata.service_type = 'digital_service';
+    }
 
     const sessionParams = {
       payment_method_types: ['card'],
@@ -1161,12 +1245,7 @@ app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, requireAgeVeri
       mode: 'payment',
       success_url: `${baseUrl}/creators.html?creator=${encodeURIComponent(creatorName)}&payment=success`,
       cancel_url: `${baseUrl}/creators.html?creator=${encodeURIComponent(creatorName)}&payment=cancelled`,
-      metadata: {
-        creator_name: creatorName,
-        buyer_id: req.user.id,
-        service_type: 'digital_service',
-        booking_ref: `bk_${Date.now()}`,
-      },
+      metadata,
     };
 
     if (creatorProfile.rows.length > 0 && creatorProfile.rows[0].stripe_connect_account_id && creatorProfile.rows[0].stripe_onboarding_complete) {
@@ -1179,7 +1258,7 @@ app.post('/api/stripe/checkout', isAuthenticated, isVerifiedUser, requireAgeVeri
     }
 
     const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
-    res.json({ url: checkoutSession.url });
+    res.json({ url: checkoutSession.url, bookingRef });
   } catch (error) {
     console.error('Error creating checkout session:', error);
     res.status(500).json({ error: 'Failed to create checkout session' });

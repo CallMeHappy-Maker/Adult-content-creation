@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadStats();
   loadUsers();
   loadMessages();
+  loadKillSwitch();
 });
 
 async function loadStats() {
@@ -161,6 +162,59 @@ async function removeUser(userId, userName) {
     loadMessages();
   } catch (err) {
     alert('Failed to remove user. Please try again.');
+  }
+}
+
+let killSwitchActive = false;
+
+async function loadKillSwitch() {
+  try {
+    const res = await fetch('/api/platform-settings/pause_availability_bookings');
+    const data = await res.json();
+    killSwitchActive = data.value === 'true';
+    updateKillSwitchUI();
+  } catch (e) {
+    document.getElementById("kill-switch-status").textContent = "Failed to load status.";
+  }
+}
+
+function updateKillSwitchUI() {
+  const btn = document.getElementById("kill-switch-btn");
+  const status = document.getElementById("kill-switch-status");
+  if (killSwitchActive) {
+    btn.textContent = "Resume Bookings";
+    btn.classList.remove("btn-danger");
+    btn.classList.add("btn-primary");
+    status.textContent = "Availability bookings are currently PAUSED. No new bookings can be placed.";
+    status.style.color = "#f55";
+  } else {
+    btn.textContent = "Pause Bookings";
+    btn.classList.remove("btn-primary");
+    btn.classList.add("btn-danger");
+    status.textContent = "Availability bookings are currently ACTIVE.";
+    status.style.color = "#0f0";
+  }
+}
+
+async function toggleKillSwitch() {
+  const newVal = killSwitchActive ? 'false' : 'true';
+  const action = killSwitchActive ? 'resume' : 'pause';
+  if (!confirm(`Are you sure you want to ${action} all availability bookings?`)) return;
+
+  try {
+    const res = await fetch('/api/admin/platform-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'pause_availability_bookings', value: newVal })
+    });
+    if (res.ok) {
+      killSwitchActive = !killSwitchActive;
+      updateKillSwitchUI();
+    } else {
+      alert('Failed to update setting.');
+    }
+  } catch (e) {
+    alert('Failed to update setting.');
   }
 }
 
