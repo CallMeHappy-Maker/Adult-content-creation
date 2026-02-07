@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   loadStats();
   loadUsers();
+  loadReviewQueue();
   loadMessages();
   loadKillSwitch();
 });
@@ -140,6 +141,71 @@ async function loadMessages() {
     }).join('');
   } catch (err) {
     console.error('Failed to load messages:', err);
+  }
+}
+
+async function loadReviewQueue() {
+  try {
+    const res = await fetch('/api/admin/review-queue');
+    const items = await res.json();
+    const tbody = document.getElementById("review-tbody");
+    const countEl = document.getElementById("review-count");
+    countEl.textContent = `${items.length} items`;
+
+    if (items.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;">No elevated-risk services to review</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = items.map(item => {
+      const creator = item.stage_name || item.display_name || item.email || 'Unknown';
+      const price = '$' + parseFloat(item.price).toFixed(2);
+      const score = item.onboarding_score || 0;
+      const scoreColor = score >= 80 ? '#0f0' : score >= 60 ? '#ff0' : '#f55';
+      const status = item.is_active ? 'Active' : 'Paused';
+      const statusClass = item.is_active ? 'status-verified' : 'status-pending';
+      const created = new Date(item.created_at).toLocaleDateString();
+      const toggleText = item.is_active ? 'Pause' : 'Activate';
+      const toggleClass = item.is_active ? 'btn-danger' : 'btn-primary';
+
+      return `
+        <tr>
+          <td>${esc(creator)}</td>
+          <td>
+            <div class="admin-user-cell">
+              <strong>${esc(item.title)}</strong>
+              <small>${esc(item.service_type)}</small>
+            </div>
+          </td>
+          <td>${price}</td>
+          <td><span style="color:${scoreColor};font-weight:bold;">${score}/100</span></td>
+          <td><span class="admin-badge ${statusClass}">${status}</span></td>
+          <td>${created}</td>
+          <td>
+            <button class="${toggleClass} btn-toggle-service" data-id="${item.id}" style="padding:0.3rem 0.6rem;font-size:0.8rem;">${toggleText}</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-toggle-service').forEach(btn => {
+      btn.addEventListener('click', () => toggleService(btn.dataset.id));
+    });
+  } catch (err) {
+    console.error('Failed to load review queue:', err);
+  }
+}
+
+async function toggleService(serviceId) {
+  try {
+    const res = await fetch(`/api/admin/services/${serviceId}/toggle`, { method: 'POST' });
+    if (res.ok) {
+      loadReviewQueue();
+    } else {
+      alert('Failed to update service.');
+    }
+  } catch (e) {
+    alert('Failed to update service.');
   }
 }
 

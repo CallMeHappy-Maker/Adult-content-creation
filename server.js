@@ -109,7 +109,7 @@ async function setupAuth() {
   passport.use(strategy);
 }
 
-const ALLOWED_REDIRECTS = ['/', '/signup.html', '/client-signup.html', '/verify.html', '/creators.html', '/chat.html', '/admin.html', '/creator-settings.html'];
+const ALLOWED_REDIRECTS = ['/', '/signup.html', '/client-signup.html', '/verify.html', '/creators.html', '/chat.html', '/admin.html', '/creator-settings.html', '/creator-onboarding.html'];
 const ALLOWED_ACCOUNT_TYPES = ['creator', 'buyer'];
 
 app.get('/api/login', (req, res, next) => {
@@ -144,10 +144,10 @@ app.get('/api/callback',
 
       if (accountType) {
         await pool.query(
-          `INSERT INTO profiles (user_id, account_type, updated_at)
+          `INSERT INTO user_profiles (user_id, account_type, updated_at)
            VALUES ($1, $2, NOW())
            ON CONFLICT (user_id) DO UPDATE SET
-             account_type = COALESCE(profiles.account_type, EXCLUDED.account_type),
+             account_type = COALESCE(user_profiles.account_type, EXCLUDED.account_type),
              updated_at = NOW()`,
           [user.id, accountType]
         );
@@ -199,6 +199,7 @@ app.get('/api/auth/user', async (req, res) => {
         up.date_of_birth, up.city, up.state_province, up.country, up.zip_code, up.id_document_type,
         up.id_verified, up.verification_status, up.stripe_customer_id, up.stripe_connect_account_id,
         up.stripe_onboarding_complete, up.bio, up.specialties,
+        up.onboarding_stage, up.onboarding_score, up.service_risk_level, up.content_categories,
         up.created_at as profile_created_at, up.updated_at as profile_updated_at
        FROM users u
        LEFT JOIN user_profiles up ON u.id = up.user_id
@@ -244,6 +245,10 @@ app.get('/api/auth/user', async (req, res) => {
         stripe_onboarding_complete: row.stripe_onboarding_complete,
         bio: row.bio,
         specialties: row.specialties,
+        onboarding_stage: row.onboarding_stage,
+        onboarding_score: row.onboarding_score,
+        service_risk_level: row.service_risk_level,
+        content_categories: row.content_categories,
         created_at: row.profile_created_at,
         updated_at: row.profile_updated_at,
       };
@@ -404,6 +409,44 @@ app.get('/api/admin/messages', isAuthenticated, isAdmin, async (req, res) => {
 
 app.get('/api/admin/check', isAuthenticated, isAdmin, (req, res) => {
   res.json({ isAdmin: true });
+});
+
+app.get('/api/admin/review-queue', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT cs.id, cs.service_type, cs.title, cs.description, cs.price, cs.risk_level, 
+             cs.is_active, cs.created_at,
+             up.stage_name, up.display_name, up.onboarding_score,
+             up.service_risk_level as creator_risk_level,
+             u.email
+      FROM creator_services cs
+      JOIN user_profiles up ON cs.user_id = up.user_id
+      JOIN users u ON cs.user_id = u.id
+      WHERE cs.risk_level = 'elevated'
+      ORDER BY cs.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Admin review queue error:', error);
+    res.status(500).json({ error: 'Failed to fetch review queue' });
+  }
+});
+
+app.post('/api/admin/services/:id/toggle', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'UPDATE creator_services SET is_active = NOT is_active, updated_at = NOW() WHERE id = $1 RETURNING *',
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Admin toggle service error:', error);
+    res.status(500).json({ error: 'Failed to toggle service' });
+  }
 });
 
 app.get('/api/creators', requireAgeVerification, async (req, res) => {
@@ -674,6 +717,301 @@ app.get('/api/creators/:name/settings', requireAgeVerification, async (req, res)
   } catch (error) {
     console.error('Error fetching creator settings:', error);
     res.status(500).json({ error: 'Failed to fetch creator settings' });
+  }
+});
+
+// === Creator Onboarding Routes ===
+
+app.get('/api/onboarding/status', isAuthenticated, async (req, res) => {
+  try {
+    const profile = await pool.query(
+      'SELECT onboarding_stage, onboarding_score, service_risk_level, content_categories, stage_name, display_name, bio, date_of_birth, country, city, state_province, zip_code, account_type, verification_status, stripe_connect_account_id, stripe_onboarding_complete FROM user_profiles WHERE user_id = $1',
+      [req.user.id]
+    );
+    const p = profile.rows[0] || {};
+
+    const attestation = await pool.query(
+      'SELECT id FROM creator_attestations WHERE user_id = $1 LIMIT 1',
+      [req.user.id]
+    );
+
+    const services = await pool.query(
+      'SELECT COUNT(*) as count FROM creator_services WHERE user_id = $1',
+      [req.user.id]
+    );
+
+    res.json({
+      stage: p.onboarding_stage || 0,
+      score: p.onboarding_score || 0,
+      riskLevel: p.service_risk_level || 'standard',
+      hasAttestation: attestation.rows.length > 0,
+      hasStripe: p.stripe_onboarding_complete || false,
+      servicesCount: parseInt(services.rows[0].count),
+      profile: p,
+    });
+  } catch (error) {
+    console.error('Error fetching onboarding status:', error);
+    res.status(500).json({ error: 'Failed to fetch onboarding status' });
+  }
+});
+
+app.post('/api/onboarding/stage1', isAuthenticated, async (req, res) => {
+  try {
+    const { date_of_birth, country } = req.body;
+    if (!date_of_birth || !country) {
+      return res.status(400).json({ error: 'Date of birth and country are required' });
+    }
+
+    const dob = new Date(date_of_birth);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      return res.status(400).json({ error: 'You must be at least 18 years old' });
+    }
+
+    const existing = await pool.query('SELECT id, onboarding_stage FROM user_profiles WHERE user_id = $1', [req.user.id]);
+
+    let result;
+    if (existing.rows.length > 0) {
+      const currentStage = existing.rows[0].onboarding_stage || 0;
+      const newScore = currentStage < 1 ? 20 : null;
+      result = await pool.query(
+        `UPDATE user_profiles SET
+          account_type = 'creator',
+          date_of_birth = $2,
+          country = $3,
+          onboarding_stage = GREATEST(COALESCE(onboarding_stage, 0), 1),
+          onboarding_score = CASE WHEN COALESCE(onboarding_stage, 0) < 1 THEN 20 ELSE onboarding_score END,
+          updated_at = NOW()
+         WHERE user_id = $1
+         RETURNING *`,
+        [req.user.id, date_of_birth, country]
+      );
+    } else {
+      result = await pool.query(
+        `INSERT INTO user_profiles (user_id, account_type, date_of_birth, country, onboarding_stage, onboarding_score)
+         VALUES ($1, 'creator', $2, $3, 1, 20)
+         RETURNING *`,
+        [req.user.id, date_of_birth, country]
+      );
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error saving stage 1:', error);
+    res.status(500).json({ error: 'Failed to save account basics' });
+  }
+});
+
+app.post('/api/onboarding/stage2', isAuthenticated, async (req, res) => {
+  try {
+    const { stage_name, bio, display_name, content_categories, city, state_province, zip_code } = req.body;
+    if (!stage_name || !bio) {
+      return res.status(400).json({ error: 'Stage name and bio are required' });
+    }
+
+    if (stage_name.length > 50 || bio.length > 500) {
+      return res.status(400).json({ error: 'Stage name max 50 chars, bio max 500 chars' });
+    }
+
+    const profile = await pool.query('SELECT onboarding_stage, account_type FROM user_profiles WHERE user_id = $1', [req.user.id]);
+    if (profile.rows.length === 0 || (profile.rows[0].onboarding_stage || 0) < 1) {
+      return res.status(400).json({ error: 'Complete stage 1 first' });
+    }
+
+    const duplicate = await pool.query(
+      'SELECT id FROM user_profiles WHERE stage_name = $1 AND user_id != $2',
+      [stage_name, req.user.id]
+    );
+    if (duplicate.rows.length > 0) {
+      return res.status(400).json({ error: 'Stage name is already taken' });
+    }
+
+    const result = await pool.query(
+      `UPDATE user_profiles SET
+        stage_name = $2,
+        bio = $3,
+        display_name = COALESCE($4, display_name),
+        content_categories = $5,
+        city = COALESCE($6, city),
+        state_province = COALESCE($7, state_province),
+        zip_code = COALESCE($8, zip_code),
+        onboarding_stage = GREATEST(COALESCE(onboarding_stage, 0), 2),
+        onboarding_score = CASE WHEN COALESCE(onboarding_stage, 0) < 2 THEN 40 ELSE onboarding_score END,
+        verification_status = 'submitted',
+        updated_at = NOW()
+       WHERE user_id = $1
+       RETURNING *`,
+      [req.user.id, stage_name, bio, display_name || null, content_categories || null, city || null, state_province || null, zip_code || null]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: 'Profile not found. Complete stage 1 first.' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error saving stage 2:', error);
+    res.status(500).json({ error: 'Failed to save profile setup' });
+  }
+});
+
+app.post('/api/onboarding/stage3', isAuthenticated, async (req, res) => {
+  try {
+    const { is_18_plus, owns_content_rights, services_comply_with_laws, no_third_party_without_consent } = req.body;
+
+    if (!is_18_plus || !owns_content_rights || !services_comply_with_laws || !no_third_party_without_consent) {
+      return res.status(400).json({ error: 'All attestation checkboxes must be accepted' });
+    }
+
+    const profile = await pool.query('SELECT onboarding_stage FROM user_profiles WHERE user_id = $1', [req.user.id]);
+    if (profile.rows.length === 0 || (profile.rows[0].onboarding_stage || 0) < 2) {
+      return res.status(400).json({ error: 'Complete profile setup first' });
+    }
+
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const version = 'v1';
+
+    await pool.query(
+      `INSERT INTO creator_attestations (user_id, attestation_version, is_18_plus, owns_content_rights, services_comply_with_laws, no_third_party_without_consent, ip_address, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (user_id, attestation_version) DO UPDATE SET
+         is_18_plus = $3, owns_content_rights = $4, services_comply_with_laws = $5, no_third_party_without_consent = $6,
+         ip_address = $7, user_agent = $8, accepted_at = NOW()`,
+      [req.user.id, version, is_18_plus, owns_content_rights, services_comply_with_laws, no_third_party_without_consent, ip, userAgent]
+    );
+
+    await pool.query(
+      `UPDATE user_profiles SET
+        onboarding_stage = GREATEST(COALESCE(onboarding_stage, 0), 3),
+        onboarding_score = CASE WHEN COALESCE(onboarding_stage, 0) < 3 THEN 60 ELSE onboarding_score END,
+        updated_at = NOW()
+       WHERE user_id = $1`,
+      [req.user.id]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving stage 3:', error);
+    res.status(500).json({ error: 'Failed to save attestation' });
+  }
+});
+
+app.post('/api/onboarding/services', isAuthenticated, async (req, res) => {
+  try {
+    const { service_type, title, price, description } = req.body;
+    if (!service_type || !title || price == null) {
+      return res.status(400).json({ error: 'Service type, title, and price are required' });
+    }
+
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice < 5.00 || parsedPrice > 10000) {
+      return res.status(400).json({ error: 'Price must be between $5.00 and $10,000.00' });
+    }
+
+    if (title.length > 200) {
+      return res.status(400).json({ error: 'Title must be 200 characters or less' });
+    }
+
+    if (description && description.length > 300) {
+      return res.status(400).json({ error: 'Description must be 300 characters or less' });
+    }
+
+    const validTypes = ['custom-video', 'custom-photos', 'video-call', 'in-person'];
+    if (!validTypes.includes(service_type)) {
+      return res.status(400).json({ error: 'Invalid service type' });
+    }
+
+    const profile = await pool.query('SELECT onboarding_stage FROM user_profiles WHERE user_id = $1', [req.user.id]);
+    if (profile.rows.length === 0 || (profile.rows[0].onboarding_stage || 0) < 3) {
+      return res.status(400).json({ error: 'Complete attestation first' });
+    }
+
+    const riskLevel = service_type === 'in-person' ? 'elevated' : 'standard';
+    const requiresApproval = service_type === 'in-person';
+
+    const result = await pool.query(
+      `INSERT INTO creator_services (user_id, service_type, title, description, price, risk_level, requires_approval)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [req.user.id, service_type, title.substring(0, 200), (description || '').substring(0, 300) || null, parsedPrice, riskLevel, requiresApproval]
+    );
+
+    const highestRisk = await pool.query(
+      `SELECT CASE WHEN EXISTS(SELECT 1 FROM creator_services WHERE user_id = $1 AND risk_level = 'elevated') THEN 'elevated' ELSE 'standard' END as max_risk`,
+      [req.user.id]
+    );
+
+    await pool.query(
+      `UPDATE user_profiles SET
+        onboarding_stage = GREATEST(COALESCE(onboarding_stage, 0), 4),
+        onboarding_score = CASE WHEN COALESCE(onboarding_stage, 0) < 4 THEN 80 ELSE onboarding_score END,
+        service_risk_level = $2,
+        updated_at = NOW()
+       WHERE user_id = $1`,
+      [req.user.id, highestRisk.rows[0].max_risk]
+    );
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error saving service:', error);
+    res.status(500).json({ error: 'Failed to save service' });
+  }
+});
+
+app.delete('/api/onboarding/services/:id', isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'DELETE FROM creator_services WHERE id = $1 AND user_id = $2 RETURNING id',
+      [req.params.id, req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    res.status(500).json({ error: 'Failed to delete service' });
+  }
+});
+
+app.get('/api/onboarding/services', isAuthenticated, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM creator_services WHERE user_id = $1 ORDER BY created_at ASC',
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ error: 'Failed to fetch services' });
+  }
+});
+
+app.post('/api/onboarding/stage5', isAuthenticated, async (req, res) => {
+  try {
+    const profile = await pool.query('SELECT onboarding_stage FROM user_profiles WHERE user_id = $1', [req.user.id]);
+    if (profile.rows.length === 0 || (profile.rows[0].onboarding_stage || 0) < 4) {
+      return res.status(400).json({ error: 'Complete service setup first' });
+    }
+
+    await pool.query(
+      `UPDATE user_profiles SET
+        onboarding_stage = GREATEST(COALESCE(onboarding_stage, 0), 5),
+        onboarding_score = 100,
+        updated_at = NOW()
+       WHERE user_id = $1`,
+      [req.user.id]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error saving stage 5:', error);
+    res.status(500).json({ error: 'Failed to update payout stage' });
   }
 });
 
@@ -1320,8 +1658,8 @@ app.post('/api/stripe/connect-onboarding', isAuthenticated, async (req, res) => 
 
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${baseUrl}/verify.html?stripe=refresh`,
-      return_url: `${baseUrl}/verify.html?stripe=complete`,
+      refresh_url: `${baseUrl}/creator-onboarding.html?stripe=refresh`,
+      return_url: `${baseUrl}/creator-onboarding.html?stripe=complete`,
       type: 'account_onboarding',
     });
 

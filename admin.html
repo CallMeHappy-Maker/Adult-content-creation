@@ -78,6 +78,30 @@
 
       <section class="admin-section">
         <div class="admin-section-header">
+          <h2>Review Queue</h2>
+          <span class="admin-count" id="review-count"></span>
+        </div>
+        <p style="color:#aaa;font-size:0.85rem;margin-bottom:0.75rem;">Elevated-risk services (availability bookings) that may need manual review.</p>
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="review-table">
+            <thead>
+              <tr>
+                <th>Creator</th>
+                <th>Service</th>
+                <th>Price</th>
+                <th>Trust Score</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="review-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-section">
+        <div class="admin-section-header">
           <h2>Recent Conversations</h2>
           <span class="admin-count" id="convo-count"></span>
         </div>

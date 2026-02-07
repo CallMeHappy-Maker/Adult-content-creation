@@ -58,7 +58,8 @@ function showAuthGate(message) {
   overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;';
 
   const isAuthenticated = isLoggedIn();
-  const buttonHref = isAuthenticated ? '/verify.html' : '/account.html';
+  const isCreator = _cachedAuthData && _cachedAuthData.profile && _cachedAuthData.profile.account_type === 'creator';
+  const buttonHref = isAuthenticated ? (isCreator ? '/creator-onboarding.html' : '/verify.html') : '/account.html';
   const buttonText = isAuthenticated ? 'Complete Verification' : 'Log In';
 
   overlay.innerHTML = `
@@ -99,7 +100,8 @@ function updateNavAuth(data) {
 
     let verifyLink = '';
     if (!profile || profile.verification_status === 'pending' || !profile.verification_status) {
-      verifyLink = `<a href="/verify.html" class="auth-nav-verify">Verify</a>`;
+      const verifyHref = (profile && profile.account_type === 'creator') ? '/creator-onboarding.html' : '/verify.html';
+      verifyLink = `<a href="${verifyHref}" class="auth-nav-verify">Verify</a>`;
     }
 
     let messagesLink = `<a href="/chat.html" class="auth-nav-link">Messages</a>`;

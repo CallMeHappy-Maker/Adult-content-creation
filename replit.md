@@ -23,7 +23,11 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - Order flow with fee breakdown and in-person session booking (date/time/location)
 - Age verification gate on all pages (server-side + client-side enforcement)
 - AI-moderated messaging (dual-layer: regex pre-filter + GPT-5-mini contextual detection, intent-based flags, soft warnings before hard blocks, creator-side message reporting)
-- Creator sign-up page with DOB-based age verification and profile setup
+- Progressive 5-stage creator onboarding (account basics → profile setup → legal attestation → service builder → payout setup) with resume capability
+- Internal trust signals: onboarding_completion_score (0-100) and service_risk_level tracking
+- Creator services stored in PostgreSQL (creator_services table) with risk level classification
+- Admin review queue for elevated-risk services (availability bookings) with activate/pause controls
+- Creator sign-up page with DOB-based age verification and profile setup (legacy, superseded by creator-onboarding.html)
 - Navigation bar linking pages (Home + auth nav area with login/verify/messages/settings/admin)
 - Dark theme (black/#8B0000 dark red/#CC0033 lipstick red)
 - Built with plain HTML, CSS, and vanilla JavaScript
@@ -48,7 +52,8 @@ A web-based adult content creator marketplace where creators set up storefronts,
 ## Project Architecture
 - `index.html` — Marketplace landing page with hero section and featured creators grid
 - `account.html` — Account page with Log In / Create Account options, Creator vs Client account type choice
-- `signup.html` — Creator sign-up page with DOB age verification and profile setup (stage name, profile pic, bio, specialties)
+- `creator-onboarding.html` — Progressive 5-stage creator onboarding (account basics, profile, attestation, services, payouts) with inline JS/CSS
+- `signup.html` — Creator sign-up page with DOB age verification and profile setup (legacy, superseded by creator-onboarding.html)
 - `client-signup.html` — Client sign-up page with display name, location, interests setup
 - `creators.html` — Creator registration form + public storefront with services and ordering
 - `verify.html` — Identity verification page (account type, legal identity, DOB, location, ID upload, bio, specialties, creator attestation)
@@ -134,6 +139,11 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - `node server.js` — starts the app on port 5000
 
 ## Recent Changes
+- 2026-02-07: Progressive 5-stage creator onboarding (creator-onboarding.html) — account basics, profile setup, legal attestation, service builder, payout setup with resume capability
+- 2026-02-07: Internal trust signals — onboarding_completion_score (0-100) and service_risk_level columns in user_profiles
+- 2026-02-07: Creator services table (creator_services) in PostgreSQL with risk level classification (standard/elevated)
+- 2026-02-07: Admin review queue for elevated-risk services (availability bookings) with activate/pause controls
+- 2026-02-07: Updated account.html creator redirect to new onboarding flow, auth.js verify links for creators
 - 2026-02-07: In-person hardening — Neutral terminology, booking disclaimer logging, address detection/blocking, emergency kill switch, Stripe metadata (time_based_booking), wired checkout flow
 - 2026-02-07: MVP Hardening — Platform Policies page, Fee Philosophy page, site footer on all pages
 - 2026-02-07: MVP Hardening — Creator Legal Self-Attestation (18+, content rights, legal compliance, consent) with timestamp + IP + version

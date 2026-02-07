@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Creator Onboarding - Adult Content Marketplace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<style>
+.onboarding-wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+.progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem 0 2rem;
+  gap: 0;
+}
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+.progress-step .step-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border: 2px solid #333;
+  background: #121212;
+  color: #666;
+  transition: all 0.3s;
+}
+.progress-step.completed .step-circle {
+  background: #CC0033;
+  border-color: #CC0033;
+  color: #fff;
+}
+.progress-step.current .step-circle {
+  border-color: #CC0033;
+  color: #CC0033;
+  animation: pulse-ring 1.5s infinite;
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(204,0,51,0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(204,0,51,0); }
+  100% { box-shadow: 0 0 0 0 rgba(204,0,51,0); }
+}
+.progress-step .step-label {
+  font-size: 0.65rem;
+  color: #666;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+.progress-step.completed .step-label,
+.progress-step.current .step-label {
+  color: #CC0033;
+}
+.progress-line {
+  flex: 1;
+  height: 2px;
+  background: #333;
+  min-width: 20px;
+  margin: 0 4px;
+  margin-bottom: 18px;
+  transition: background 0.3s;
+}
+.progress-line.completed {
+  background: #CC0033;
+}
+.stage-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+.stage-card h2 {
+  color: #CC0033;
+  margin: 0 0 0.25rem;
+  font-size: 1.3rem;
+}
+.stage-card .stage-subtitle {
+  color: #aaa;
+  font-size: 0.85rem;
+  margin: 0 0 1.25rem;
+}
+.stage-card label {
+  display: block;
+  color: #ccc;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+.stage-card input[type="text"],
+.stage-card input[type="number"],
+.stage-card textarea,
+.stage-card select {
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #222;
+  color: #eee;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+}
+.stage-card textarea {
+  resize: vertical;
+}
+.stage-card select {
+  appearance: auto;
+}
+.dob-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.dob-row select {
+  flex: 1;
+}
+.btn-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+.btn-continue {
+  padding: 0.75rem 1.5rem;
+  background: #CC0033;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-continue:hover {
+  background: #a3002a;
+}
+.btn-continue:disabled {
+  background: #4a0015;
+  cursor: not-allowed;
+}
+.btn-back {
+  padding: 0.75rem 1.5rem;
+  background: #333;
+  color: #ccc;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-back:hover {
+  background: #444;
+}
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background: #333;
+  color: #ccc;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+.btn-secondary:hover {
+  background: #444;
+}
+.stage-feedback {
+  color: #ff4444;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  min-height: 1.2em;
+}
+.char-counter {
+  text-align: right;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.2rem;
+}
+.char-counter.warn {
+  color: #CC0033;
+}
+.categories-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.cat-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 6px;
+  cursor: pointer;
+  min-height: 44px;
+  font-size: 0.85rem;
+  color: #ccc;
+  transition: border-color 0.2s, background 0.2s;
+}
+.cat-label:hover {
+  border-color: #CC0033;
+}
+.cat-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #CC0033;
+  flex-shrink: 0;
+}
+.attest-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.attest-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #CC0033;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.attest-item span {
+  color: #ccc;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.attest-disclosure {
+  color: #888;
+  font-size: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #1e1e1e;
+  border-radius: 6px;
+  border-left: 3px solid #555;
+}
+.service-form-inline {
+  background: #222;
+  border: 1px dashed #444;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+.service-form-inline label {
+  margin-top: 0.75rem;
+}
+.fee-preview {
+  background: #2a2a2a;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+.fee-preview table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.fee-preview td {
+  padding: 0.25rem 0;
+  color: #bbb;
+}
+.fee-preview td:last-child {
+  text-align: right;
+  color: #eee;
+}
+.fee-preview tr.total-row td {
+  border-top: 1px solid #444;
+  padding-top: 0.5rem;
+  font-weight: bold;
+  color: #CC0033;
+}
+.warning-box {
+  background: #3d3000;
+  border: 1px solid #6b5a00;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  color: #ffd700;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.btn-save-service {
+  padding: 0.6rem 1.25rem;
+  background: #CC0033;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background 0.2s;
+}
+.btn-save-service:hover {
+  background: #a3002a;
+}
+.btn-add-service {
+  padding: 0.6rem 1.25rem;
+  background: #333;
+  color: #ccc;
+  border: 1px dashed #555;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.btn-add-service:hover {
+  background: #444;
+}
+.service-list {
+  margin-top: 1rem;
+}
+.service-item {
+  background: #2a2a2a;
+  border-left: 3px solid #CC0033;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.service-item-info h4 {
+  margin: 0 0 0.15rem;
+  color: #eee;
+  font-size: 0.95rem;
+}
+.service-item-info p {
+  margin: 0;
+  color: #888;
+  font-size: 0.8rem;
+}
+.btn-delete-service {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s;
+}
+.btn-delete-service:hover {
+  color: #ff4444;
+}
+.stripe-btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #635bff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.stripe-btn:hover {
+  background: #4f46e5;
+}
+.stripe-connected {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #4caf50;
+  font-size: 0.95rem;
+  padding: 0.75rem;
+  background: #1a2e1a;
+  border-radius: 6px;
+  border: 1px solid #2d4a2d;
+  margin-bottom: 1rem;
+}
+.completion-section {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+.completion-section h2 {
+  color: #CC0033;
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+}
+.completion-section p {
+  color: #aaa;
+  margin-bottom: 1.5rem;
+}
+.completion-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+.completion-links a {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 0.95rem;
+  min-width: 220px;
+  text-align: center;
+}
+.completion-links .link-primary {
+  background: #CC0033;
+  color: #fff;
+}
+.completion-links .link-primary:hover {
+  background: #a3002a;
+}
+.completion-links .link-secondary {
+  background: #333;
+  color: #ccc;
+}
+.completion-links .link-secondary:hover {
+  background: #444;
+}
+@media (max-width: 480px) {
+  .categories-grid {
+    grid-template-columns: 1fr;
+  }
+  .dob-row {
+    flex-direction: column;
+  }
+  .btn-row {
+    flex-direction: column;
+  }
+  .btn-row button, .btn-row a {
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Adult Content Marketplace</h1>
+  <p>Creator Onboarding</p>
+  <nav id="main-nav">
+    <a href="/">Home</a>
+    <div id="auth-nav"></div>
+  </nav>
+</header>
+
+<main>
+  <div class="onboarding-wrap">
+    <div class="progress-bar" id="progress-bar">
+      <div class="progress-step" data-step="1">
+        <div class="step-circle">1</div>
+        <div class="step-label">Basics</div>
+      </div>
+      <div class="progress-line" data-line="1"></div>
+      <div class="progress-step" data-step="2">
+        <div class="step-circle">2</div>
+        <div class="step-label">Profile</div>
+      </div>
+      <div class="progress-line" data-line="2"></div>
+      <div class="progress-step" data-step="3">
+        <div class="step-circle">3</div>
+        <div class="step-label">Attestation</div>
+      </div>
+      <div class="progress-line" data-line="3"></div>
+      <div class="progress-step" data-step="4">
+        <div class="step-circle">4</div>
+        <div class="step-label">Services</div>
+      </div>
+      <div class="progress-line" data-line="4"></div>
+      <div class="progress-step" data-step="5">
+        <div class="step-circle">5</div>
+        <div class="step-label">Payouts</div>
+      </div>
+    </div>
+
+    <div id="stage-1" class="stage-card hidden">
+      <h2>Account Basics</h2>
+      <p class="stage-subtitle">Let's get started — this should take under a minute.</p>
+      <label>Date of Birth</label>
+      <div class="dob-row">
+        <select id="dob-month">
+          <option value="">Month</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <select id="dob-day">
+          <option value="">Day</option>
+        </select>
+        <select id="dob-year">
+          <option value="">Year</option>
+        </select>
+      </div>
+      <label for="s1-country">Country</label>
+      <select id="s1-country">
+        <option value="">Select country...</option>
+        <option value="US">United States</option>
+        <option value="CA">Canada</option>
+        <option value="GB">United Kingdom</option>
+        <option value="AU">Australia</option>
+        <option value="DE">Germany</option>
+        <option value="FR">France</option>
+        <option value="ES">Spain</option>
+        <option value="IT">Italy</option>
+        <option value="NL">Netherlands</option>
+        <option value="BR">Brazil</option>
+        <option value="MX">Mexico</option>
+        <option value="JP">Japan</option>
+        <option value="KR">South Korea</option>
+        <option value="IN">India</option>
+        <option value="SE">Sweden</option>
+        <option value="NO">Norway</option>
+        <option value="DK">Denmark</option>
+        <option value="FI">Finland</option>
+        <option value="CH">Switzerland</option>
+        <option value="AT">Austria</option>
+        <option value="BE">Belgium</option>
+        <option value="IE">Ireland</option>
+        <option value="NZ">New Zealand</option>
+        <option value="PT">Portugal</option>
+        <option value="PL">Poland</option>
+        <option value="CZ">Czech Republic</option>
+        <option value="RO">Romania</option>
+        <option value="AR">Argentina</option>
+        <option value="CO">Colombia</option>
+        <option value="CL">Chile</option>
+        <option value="ZA">South Africa</option>
+        <option value="OTHER">Other</option>
+      </select>
+      <div class="btn-row">
+        <button class="btn-continue" onclick="submitStage1()">Continue</button>
+      </div>
+      <div class="stage-feedback" id="s1-feedback"></div>
+    </div>
+
+    <div id="stage-2" class="stage-card hidden">
+      <h2>Profile Setup</h2>
+      <p class="stage-subtitle">Set up your public creator profile.</p>
+      <label for="s2-stage-name">Stage Name *</label>
+      <input type="text" id="s2-stage-name" placeholder="Your public creator name">
+      <label for="s2-display-name">Display Name (optional)</label>
+      <input type="text" id="s2-display-name" placeholder="Shows if different from stage name">
+      <label for="s2-bio">Bio</label>
+      <textarea id="s2-bio" rows="4" maxlength="500" placeholder="Tell potential buyers about yourself..." oninput="updateBioCounter()"></textarea>
+      <div class="char-counter" id="bio-counter">0 / 500</div>
+      <label>Content Categories</label>
+      <div class="categories-grid">
+        <label class="cat-label"><input type="checkbox" name="s2-cat" value="Custom Video"> Custom Video</label>
+        <label class="cat-label"><input type="checkbox" name="s2-cat" value="Photo Sets"> Photo Sets</label>
+        <label class="cat-label"><input type="checkbox" name="s2-cat" value="Video Calls"> Video Calls</label>
+        <label class="cat-label"><input type="checkbox" name="s2-cat" value="Live Sessions"> Live Sessions</label>
+        <label class="cat-label"><input type="checkbox" name="s2-cat" value="Digital Content"> Digital Content</label>
+        <label class="cat-label"><input type="checkbox" name="s2-cat" value="Cosplay"> Cosplay</label>
+        <label class="cat-label"><input type="checkbox" name="s2-cat" value="Roleplay"> Roleplay</label>
+        <label class="cat-label"><input type="checkbox" name="s2-cat" value="Fetish-Friendly"> Fetish-Friendly</label>
+      </div>
+      <label for="s2-city">City (optional)</label>
+      <input type="text" id="s2-city" placeholder="City">
+      <label for="s2-state">State / Province (optional)</label>
+      <input type="text" id="s2-state" placeholder="State or Province">
+      <label for="s2-zip">ZIP Code (optional)</label>
+      <input type="text" id="s2-zip" placeholder="ZIP / Postal code">
+      <div class="btn-row">
+        <button class="btn-back" onclick="showStage(1)">Back</button>
+        <button class="btn-continue" onclick="submitStage2()">Continue</button>
+      </div>
+      <div class="stage-feedback" id="s2-feedback"></div>
+    </div>
+
+    <div id="stage-3" class="stage-card hidden">
+      <h2>Legal Attestation</h2>
+      <p class="stage-subtitle">Before you can publish services, we need you to confirm the following:</p>
+      <label class="attest-item" onclick="toggleAttest(this)">
+        <input type="checkbox" name="attest" value="age" onchange="checkAttestations()">
+        <span>I am 18 years of age or older</span>
+      </label>
+      <label class="attest-item" onclick="toggleAttest(this)">
+        <input type="checkbox" name="attest" value="rights" onchange="checkAttestations()">
+        <span>I own the rights to all content I will create and sell on this platform</span>
+      </label>
+      <label class="attest-item" onclick="toggleAttest(this)">
+        <input type="checkbox" name="attest" value="compliance" onchange="checkAttestations()">
+        <span>My services comply with all applicable local, state, and federal laws</span>
+      </label>
+      <label class="attest-item" onclick="toggleAttest(this)">
+        <input type="checkbox" name="attest" value="consent" onchange="checkAttestations()">
+        <span>I will not share or sell content involving third parties without their documented consent</span>
+      </label>
+      <div class="attest-disclosure">Your attestation will be recorded with timestamp and IP address for compliance purposes.</div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="showStage(2)">Back</button>
+        <button class="btn-continue" id="btn-attest" disabled onclick="submitStage3()">I Agree &amp; Continue</button>
+      </div>
+      <div class="stage-feedback" id="s3-feedback"></div>
+    </div>
+
+    <div id="stage-4" class="stage-card hidden">
+      <h2>Service Builder</h2>
+      <p class="stage-subtitle">Add services to your storefront. You can always add more later.</p>
+      <div id="service-form-container"></div>
+      <button class="btn-add-service" id="btn-add-svc" onclick="showServiceForm()">+ Add Service</button>
+      <div class="service-list" id="service-list"></div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="showStage(3)">Back</button>
+        <button class="btn-continue" id="btn-s4-continue" onclick="submitStage4()">Continue</button>
+      </div>
+      <div class="stage-feedback" id="s4-feedback"></div>
+    </div>
+
+    <div id="stage-5" class="stage-card hidden">
+      <h2>Payout Setup</h2>
+      <p class="stage-subtitle">Set up payouts to receive earnings. You can skip this and set it up later — you won't be able to withdraw earnings until payouts are configured.</p>
+      <div id="stripe-status"></div>
+      <div id="stripe-actions">
+        <div class="btn-row" style="flex-direction:column;align-items:stretch;">
+          <button class="stripe-btn" onclick="setupStripe()">Set Up Payouts with Stripe</button>
+          <button class="btn-secondary" onclick="completeLater()">Complete Later</button>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:0.5rem;">
+        <button class="btn-back" onclick="showStage(4)">Back</button>
+      </div>
+      <div class="stage-feedback" id="s5-feedback"></div>
+    </div>
+
+    <div id="stage-complete" class="stage-card hidden">
+      <div class="completion-section">
+        <h2>&#127881; Your creator account is ready!</h2>
+        <p>Congratulations — you're all set up. Start sharing your storefront and connecting with clients.</p>
+        <div class="completion-links">
+          <a href="#" id="link-storefront" class="link-primary">View Your Storefront</a>
+          <a href="/creator-settings.html" class="link-secondary">Creator Settings</a>
+          <a href="/" class="link-secondary">Back to Marketplace</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer" style="text-align:center;padding:1.5rem 1rem;border-top:1px solid #333;margin-top:2rem;">
+  <div class="footer-links" style="display:flex;gap:1rem;justify-content:center;margin-bottom:0.5rem;">
+    <a href="/platform-role.html" style="color:#888;text-decoration:none;font-size:0.85rem;">Platform Policies</a>
+    <a href="/fees.html" style="color:#888;text-decoration:none;font-size:0.85rem;">Fees & Refunds</a>
+  </div>
+  <p style="color:#666;font-size:0.8rem;margin:0;">&copy; 2026 Adult Content Marketplace. All rights reserved.</p>
+</footer>
+
+<script src="js/auth.js"></script>
+<script>
+let currentStage = 1;
+let onboardingData = {};
+let services = [];
+let creatorStageName = '';
+
+function populateDobDropdowns() {
+  const daySelect = document.getElementById('dob-day');
+  const yearSelect = document.getElementById('dob-year');
+  for (let d = 1; d <= 31; d++) {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d;
+    daySelect.appendChild(opt);
+  }
+  const now = new Date().getFullYear();
+  for (let y = now - 18; y >= now - 100; y--) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    yearSelect.appendChild(opt);
+  }
+}
+
+function showStage(n) {
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('stage-' + i).classList.add('hidden');
+  }
+  document.getElementById('stage-complete').classList.add('hidden');
+  if (n === 'complete') {
+    document.getElementById('stage-complete').classList.remove('hidden');
+    document.getElementById('progress-bar').classList.add('hidden');
+  } else {
+    document.getElementById('stage-' + n).classList.remove('hidden');
+    currentStage = n;
+  }
+  updateProgressBar(n === 'complete' ? 6 : n);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgressBar(active) {
+  const steps = document.querySelectorAll('.progress-step');
+  const lines = document.querySelectorAll('.progress-line');
+  steps.forEach((s, i) => {
+    const stepNum = i + 1;
+    s.classList.remove('completed', 'current');
+    if (stepNum < active) s.classList.add('completed');
+    else if (stepNum === active) s.classList.add('current');
+  });
+  lines.forEach((l, i) => {
+    const lineNum = i + 1;
+    l.classList.toggle('completed', lineNum < active);
+  });
+}
+
+function updateBioCounter() {
+  const bio = document.getElementById('s2-bio');
+  const counter = document.getElementById('bio-counter');
+  const len = bio.value.length;
+  counter.textContent = len + ' / 500';
+  counter.classList.toggle('warn', len > 450);
+}
+
+function checkAttestations() {
+  const boxes = document.querySelectorAll('input[name="attest"]');
+  const allChecked = Array.from(boxes).every(b => b.checked);
+  document.getElementById('btn-attest').disabled = !allChecked;
+}
+
+function toggleAttest(label) {
+}
+
+function validateAge(month, day, year) {
+  if (!month || !day || !year) return false;
+  const dob = new Date(year, month - 1, day);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age >= 18;
+}
+
+async function submitStage1() {
+  const month = document.getElementById('dob-month').value;
+  const day = document.getElementById('dob-day').value;
+  const year = document.getElementById('dob-year').value;
+  const country = document.getElementById('s1-country').value;
+  const fb = document.getElementById('s1-feedback');
+  if (!month || !day || !year) { fb.textContent = 'Please select your date of birth.'; return; }
+  if (!validateAge(month, day, year)) { fb.textContent = 'You must be at least 18 years old.'; return; }
+  if (!country) { fb.textContent = 'Please select your country.'; return; }
+  fb.textContent = '';
+  try {
+    const res = await fetch('/api/onboarding/stage1', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dob_month: parseInt(month), dob_day: parseInt(day), dob_year: parseInt(year), country })
+    });
+    const data = await res.json();
+    if (!res.ok) { fb.textContent = data.error || 'Something went wrong.'; return; }
+    showStage(2);
+  } catch (e) { fb.textContent = 'Network error. Please try again.'; }
+}
+
+async function submitStage2() {
+  const stageName = document.getElementById('s2-stage-name').value.trim();
+  const displayName = document.getElementById('s2-display-name').value.trim();
+  const bio = document.getElementById('s2-bio').value.trim();
+  const cats = Array.from(document.querySelectorAll('input[name="s2-cat"]:checked')).map(c => c.value);
+  const city = document.getElementById('s2-city').value.trim();
+  const state = document.getElementById('s2-state').value.trim();
+  const zip = document.getElementById('s2-zip').value.trim();
+  const fb = document.getElementById('s2-feedback');
+  if (!stageName) { fb.textContent = 'Stage name is required.'; return; }
+  fb.textContent = '';
+  creatorStageName = stageName;
+  try {
+    const res = await fetch('/api/onboarding/stage2', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage_name: stageName, display_name: displayName, bio, categories: cats, city, state, zip })
+    });
+    const data = await res.json();
+    if (!res.ok) { fb.textContent = data.error || 'Something went wrong.'; return; }
+    showStage(3);
+  } catch (e) { fb.textContent = 'Network error. Please try again.'; }
+}
+
+async function submitStage3() {
+  const fb = document.getElementById('s3-feedback');
+  fb.textContent = '';
+  try {
+    const res = await fetch('/api/onboarding/stage3', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attestations: ['age', 'rights', 'compliance', 'consent'] })
+    });
+    const data = await res.json();
+    if (!res.ok) { fb.textContent = data.error || 'Something went wrong.'; return; }
+    await loadServices();
+    showStage(4);
+  } catch (e) { fb.textContent = 'Network error. Please try again.'; }
+}
+
+function showServiceForm() {
+  document.getElementById('btn-add-svc').classList.add('hidden');
+  const container = document.getElementById('service-form-container');
+  container.innerHTML = '<div class="service-form-inline">' +
+    '<label for="svc-type">Service Type</label>' +
+    '<select id="svc-type" onchange="onServiceTypeChange()">' +
+      '<option value="Custom Video">Custom Video</option>' +
+      '<option value="Custom Photos">Custom Photos</option>' +
+      '<option value="Video Call">Video Call</option>' +
+      '<option value="Availability Booking">Availability Booking</option>' +
+    '</select>' +
+    '<label for="svc-title">Title</label>' +
+    '<input type="text" id="svc-title" placeholder="e.g. 5-Minute Custom Video">' +
+    '<label for="svc-desc">Description (optional)</label>' +
+    '<textarea id="svc-desc" rows="2" maxlength="300" placeholder="Describe this service..." oninput="updateSvcDescCounter()"></textarea>' +
+    '<div class="char-counter" id="svc-desc-counter">0 / 300</div>' +
+    '<label for="svc-price">Price ($)</label>' +
+    '<input type="number" id="svc-price" min="5" step="0.01" placeholder="5.00" oninput="updateFeePreview()">' +
+    '<div id="svc-fee-preview"></div>' +
+    '<div id="svc-warning"></div>' +
+    '<div style="display:flex;gap:0.5rem;margin-top:1rem;">' +
+      '<button class="btn-save-service" onclick="saveService()">Save Service</button>' +
+      '<button class="btn-back" onclick="cancelServiceForm()">Cancel</button>' +
+    '</div>' +
+    '<div class="stage-feedback" id="svc-feedback"></div>' +
+  '</div>';
+  onServiceTypeChange();
+}
+
+function cancelServiceForm() {
+  document.getElementById('service-form-container').innerHTML = '';
+  document.getElementById('btn-add-svc').classList.remove('hidden');
+}
+
+function updateSvcDescCounter() {
+  const desc = document.getElementById('svc-desc');
+  const counter = document.getElementById('svc-desc-counter');
+  if (desc && counter) {
+    counter.textContent = desc.value.length + ' / 300';
+  }
+}
+
+function onServiceTypeChange() {
+  const type = document.getElementById('svc-type').value;
+  const warn = document.getElementById('svc-warning');
+  if (type === 'Availability Booking') {
+    warn.innerHTML = '<div class="warning-box">Availability bookings involve scheduling time-based sessions. You must acknowledge: This service type has additional review requirements and may require manual approval.</div>';
+  } else {
+    warn.innerHTML = '';
+  }
+}
+
+function updateFeePreview() {
+  const priceInput = document.getElementById('svc-price');
+  const preview = document.getElementById('svc-fee-preview');
+  const price = parseFloat(priceInput.value);
+  if (!price || price < 5) { preview.innerHTML = ''; return; }
+  const platformFee = price * 0.15;
+  const processingFee = price * 0.029 + 0.30;
+  const total = price + platformFee + processingFee;
+  preview.innerHTML = '<div class="fee-preview"><table>' +
+    '<tr><td>Creator Earnings</td><td>$' + price.toFixed(2) + '</td></tr>' +
+    '<tr><td>Platform Fee (15%)</td><td>$' + platformFee.toFixed(2) + '</td></tr>' +
+    '<tr><td>Processing Fee (2.9% + $0.30)</td><td>$' + processingFee.toFixed(2) + '</td></tr>' +
+    '<tr class="total-row"><td>Total to Buyer</td><td>$' + total.toFixed(2) + '</td></tr>' +
+  '</table></div>';
+}
+
+async function saveService() {
+  const type = document.getElementById('svc-type').value;
+  const title = document.getElementById('svc-title').value.trim();
+  const desc = document.getElementById('svc-desc').value.trim();
+  const price = parseFloat(document.getElementById('svc-price').value);
+  const fb = document.getElementById('svc-feedback');
+  if (!title) { fb.textContent = 'Title is required.'; return; }
+  if (!price || price < 5) { fb.textContent = 'Price must be at least $5.00.'; return; }
+  fb.textContent = '';
+  try {
+    const res = await fetch('/api/onboarding/services', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, title, description: desc, price })
+    });
+    const data = await res.json();
+    if (!res.ok) { fb.textContent = data.error || 'Failed to save service.'; return; }
+    await loadServices();
+    cancelServiceForm();
+  } catch (e) { fb.textContent = 'Network error. Please try again.'; }
+}
+
+async function loadServices() {
+  try {
+    const res = await fetch('/api/onboarding/services');
+    if (res.ok) {
+      const data = await res.json();
+      services = data.services || data || [];
+    }
+  } catch (e) {}
+  renderServices();
+}
+
+function renderServices() {
+  const list = document.getElementById('service-list');
+  if (!services.length) { list.innerHTML = ''; return; }
+  list.innerHTML = services.map((s, i) => {
+    const id = s.id || i;
+    return '<div class="service-item">' +
+      '<div class="service-item-info">' +
+        '<h4>' + escapeHtml(s.title || s.type) + '</h4>' +
+        '<p>' + escapeHtml(s.type) + ' &mdash; $' + (parseFloat(s.price) || 0).toFixed(2) + '</p>' +
+      '</div>' +
+      '<button class="btn-delete-service" onclick="deleteService(\'' + id + '\')">&times;</button>' +
+    '</div>';
+  }).join('');
+}
+
+async function deleteService(id) {
+  try {
+    await fetch('/api/onboarding/services/' + id, { method: 'DELETE' });
+    await loadServices();
+  } catch (e) {}
+}
+
+async function submitStage4() {
+  const fb = document.getElementById('s4-feedback');
+  if (!services.length) { fb.textContent = 'Add at least one service before continuing.'; return; }
+  fb.textContent = '';
+  showStage(5);
+  checkStripeStatus();
+}
+
+async function checkStripeStatus() {
+  const statusDiv = document.getElementById('stripe-status');
+  const actionsDiv = document.getElementById('stripe-actions');
+  try {
+    const res = await fetch('/api/stripe/connect-status');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.connected) {
+        statusDiv.innerHTML = '<div class="stripe-connected">&#10003; Stripe payouts connected</div>';
+        actionsDiv.innerHTML = '<div class="btn-row" style="flex-direction:column;align-items:stretch;">' +
+          '<button class="btn-continue" onclick="finishOnboarding()">Continue</button>' +
+          '<button class="btn-secondary" onclick="completeLater()">Complete Later</button>' +
+        '</div>';
+        return;
+      }
+    }
+  } catch (e) {}
+  statusDiv.innerHTML = '';
+  actionsDiv.innerHTML = '<div class="btn-row" style="flex-direction:column;align-items:stretch;">' +
+    '<button class="stripe-btn" onclick="setupStripe()">Set Up Payouts with Stripe</button>' +
+    '<button class="btn-secondary" onclick="completeLater()">Complete Later</button>' +
+  '</div>';
+}
+
+async function setupStripe() {
+  const fb = document.getElementById('s5-feedback');
+  try {
+    const res = await fetch('/api/stripe/connect-onboarding', { method: 'POST' });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      fb.textContent = data.error || 'Could not start Stripe onboarding.';
+    }
+  } catch (e) { fb.textContent = 'Network error. Please try again.'; }
+}
+
+async function completeLater() {
+  try {
+    await fetch('/api/onboarding/stage5', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skipped: true })
+    });
+  } catch (e) {}
+  finishOnboarding();
+}
+
+function finishOnboarding() {
+  const link = document.getElementById('link-storefront');
+  if (creatorStageName) {
+    link.href = '/creators.html?name=' + encodeURIComponent(creatorStageName);
+  } else {
+    link.href = '/creators.html';
+  }
+  showStage('complete');
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function prefillData(data) {
+  if (!data) return;
+  if (data.dob_month) document.getElementById('dob-month').value = data.dob_month;
+  if (data.dob_day) document.getElementById('dob-day').value = data.dob_day;
+  if (data.dob_year) document.getElementById('dob-year').value = data.dob_year;
+  if (data.country) document.getElementById('s1-country').value = data.country;
+  if (data.stage_name) { document.getElementById('s2-stage-name').value = data.stage_name; creatorStageName = data.stage_name; }
+  if (data.display_name) document.getElementById('s2-display-name').value = data.display_name;
+  if (data.bio) { document.getElementById('s2-bio').value = data.bio; updateBioCounter(); }
+  if (data.city) document.getElementById('s2-city').value = data.city;
+  if (data.state) document.getElementById('s2-state').value = data.state;
+  if (data.zip) document.getElementById('s2-zip').value = data.zip;
+  if (data.categories && Array.isArray(data.categories)) {
+    data.categories.forEach(cat => {
+      const cb = document.querySelector('input[name="s2-cat"][value="' + cat + '"]');
+      if (cb) cb.checked = true;
+    });
+  }
+}
+
+async function init() {
+  populateDobDropdowns();
+  const authData = await initAuth();
+  if (!authData || !authData.user) {
+    window.location.href = '/api/login?redirect=/creator-onboarding.html';
+    return;
+  }
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('stripe') === 'complete' || params.get('stripe') === 'refresh') {
+    await loadServices();
+    showStage(5);
+    checkStripeStatus();
+    return;
+  }
+  try {
+    const res = await fetch('/api/onboarding/status');
+    if (res.ok) {
+      const data = await res.json();
+      onboardingData = data;
+      prefillData(data);
+      if (data.services) services = data.services;
+      renderServices();
+      const stage = data.onboarding_stage || 1;
+      if (stage > 5) {
+        finishOnboarding();
+      } else {
+        showStage(stage);
+        if (stage >= 4) await loadServices();
+        if (stage === 5) checkStripeStatus();
+      }
+      return;
+    }
+  } catch (e) {}
+  showStage(1);
+}
+
+init();
+</script>
+</body>
+</html>
