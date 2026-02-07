@@ -1,0 +1,195 @@
+Save posts in browser storage (localStorage)
+This ensures that posts persist even if the page reloads. Update /public/js/app.js:
+Copy code
+Js
+// Load existing posts on page load
+document.addEventListener("DOMContentLoaded", () => {
+  const savedPosts = JSON.parse(localStorage.getItem("creatorPosts") || "[]");
+  savedPosts.forEach(p => addPostToFeed(p.content, p.visibility));
+});
+
+// Save posts function
+function savePost(content, visibility) {
+  const savedPosts = JSON.parse(localStorage.getItem("creatorPosts") || "[]");
+  savedPosts.unshift({ content, visibility });
+  localStorage.setItem("creatorPosts", JSON.stringify(savedPosts));
+}
+
+// Reusable function to add post element
+function addPostToFeed(content, visibility) {
+  const postEl = document.createElement("div");
+  postEl.className = "post";
+  postEl.innerHTML = `
+    <p>${content}</p>
+    <small>Visibility: ${visibility}</small>
+  `;
+  feedSection.prepend(postEl);
+}
+
+// Updated create post button
+createPostBtn.addEventListener("click", () => {
+  const content = postContent.value.trim();
+  const visibility = visibilitySelect.value;
+
+  if (!content) {
+    feedback.textContent = "Post cannot be empty!";
+    feedback.style.color = "#f55";
+    return;
+  }
+
+  addPostToFeed(content, visibility);
+  savePost(content, visibility);
+
+  postContent.value = "";
+  visibilitySelect.value = "public";
+  feedback.textContent = "Post created successfully!";
+  feedback.style.color = "#0f0";
+});
+✅ Posts now persist on reload.
+2️⃣ Allow image/video uploads (preview only for now)
+Update your Creator section in index.html:
+Copy code
+Html
+<label for="post-media">Add Image/Video (optional):</label>
+<input type="file" id="post-media" accept="image/*,video/*"><br/><br/>
+Update JS:
+Copy code
+Js
+const postMedia = document.getElementById("post-media");
+
+function addPostToFeed(content, visibility, mediaFile = null) {
+  const postEl = document.createElement("div");
+  postEl.className = "post";
+
+  let mediaHTML = "";
+  if (mediaFile) {
+    const url = URL.createObjectURL(mediaFile);
+    if (mediaFile.type.startsWith("image/")) mediaHTML = `<img src="${url}" style="max-width:100%; border-radius:6px;">`;
+    else if (mediaFile.type.startsWith("video/")) mediaHTML = `<video src="${url}" controls style="max-width:100%; border-radius:6px;"></video>`;
+  }
+
+  postEl.innerHTML = `
+    <p>${content}</p>
+    ${mediaHTML}
+    <small>Visibility: ${visibility}</small>
+  `;
+  feedSection.prepend(postEl);
+}
+
+// Update savePost and createPostBtn to include file
+createPostBtn.addEventListener("click", () => {
+  const content = postContent.value.trim();
+  const visibility = visibilitySelect.value;
+  const mediaFile = postMedia.files[0] || null;
+
+  if (!content && !mediaFile) {
+    feedback.textContent = "Post cannot be empty!";
+    feedback.style.color = "#f55";
+    return;
+  }
+
+  addPostToFeed(content, visibility, mediaFile);
+  savePost(content, visibility); // Note: only content saved for now
+  postContent.value = "";
+  postMedia.value = "";
+  visibilitySelect.value = "public";
+  feedback.textContent = "Post created successfully!";
+  feedback.style.color = "#0f0";
+});
+✅ Now users can attach media (preview only, stored temporarily).
+3️⃣ Post editing and deletion
+Add these buttons to each post inside addPostToFeed:
+Copy code
+Js
+postEl.innerHTML += `
+  <div style="margin-top:5px;">
+    <button class="edit-btn">Edit</button>
+    <button class="delete-btn">Delete</button>
+  </div>
+`;
+Add event listeners:
+Copy code
+Js
+const editBtn = postEl.querySelector(".edit-btn");
+const deleteBtn = postEl.querySelector(".delete-btn");
+
+editBtn.addEventListener("click", () => {
+  const newContent = prompt("Edit your post:", content);
+  if (newContent !== null) {
+    postEl.querySelector("p").textContent = newContent;
+    // Update localStorage
+    const posts = JSON.parse(localStorage.getItem("creatorPosts") || "[]");
+    const idx = posts.findIndex(p => p.content === content && p.visibility === visibility);
+    if (idx > -1) {
+      posts[idx].content = newContent;
+      localStorage.setItem("creatorPosts", JSON.stringify(posts));
+    }
+  }
+});
+
+deleteBtn.addEventListener("click", () => {
+  postEl.remove();
+  const posts = JSON.parse(localStorage.getItem("creatorPosts") || "[]");
+  const idx = posts.findIndex(p => p.content === content && p.visibility === visibility);
+  if (idx > -1) {
+    posts.splice(idx, 1);
+    localStorage.setItem("creatorPosts", JSON.stringify(posts));
+  }
+});
+✅ Now posts can be edited or deleted.
+4️⃣ Follower-based filtering
+For now, we simulate followers using a dropdown at the top of the feed:
+Copy code
+Html
+<label for="filter">Filter Feed:</label>
+<select id="filter">
+  <option value="all">All</option>
+  <option value="public">Public</option>
+  <option value="followers">Followers Only</option>
+  <option value="private">Private</option>
+</select>
+JS to filter posts:
+Copy code
+Js
+const filterSelect = document.getElementById("filter");
+filterSelect.addEventListener("change", () => {
+  const filter = filterSelect.value;
+  const allPosts = feedSection.querySelectorAll(".post");
+  allPosts.forEach(post => {
+    const vis = post.querySelector("small").textContent.replace("Visibility: ", "");
+    post.style.display = filter === "all" || vis === filter ? "block" : "none";
+  });
+});
+✅ Users can now filter feed by visibility.
+5️⃣ Creator profile system
+Simplest version: each post tags a creator name (can be stored in localStorage):
+Copy code
+Html
+<label for="creator-name">Your Name:</label>
+<input type="text" id="creator-name" placeholder="Creator name"><br/>
+JS addition:
+Copy code
+Js
+const creatorNameInput = document.getElementById("creator-name");
+
+function addPostToFeed(content, visibility, mediaFile = null) {
+  const creatorName = creatorNameInput.value.trim() || "Anonymous";
+  const postEl = document.createElement("div");
+  postEl.className = "post";
+
+  let mediaHTML = "";
+  if (mediaFile) {
+    const url = URL.createObjectURL(mediaFile);
+    if (mediaFile.type.startsWith("image/")) mediaHTML = `<img src="${url}" style="max-width:100%; border-radius:6px;">`;
+    else if (mediaFile.type.startsWith("video/")) mediaHTML = `<video src="${url}" controls style="max-width:100%; border-radius:6px;"></video>`;
+  }
+
+  postEl.innerHTML = `
+    <strong>${creatorName}</strong>
+    <p>${content}</p>
+    ${mediaHTML}
+    <small>Visibility: ${visibility}</small>
+  `;
+  feedSection.prepend(postEl);
+}
+✅ Now each post shows the creator name, laying the groundwork for profiles later.

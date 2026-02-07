@@ -77,3 +77,32 @@ select {
   margin-bottom: 1rem;
   border-left: 4px solid #0ff;
 }
+
+.post strong {
+  color: #0ff;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.edit-btn, .delete-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  margin-right: 5px;
+}
+
+.delete-btn {
+  background: #555;
+}
+
+.delete-btn:hover {
+  background: #a00;
+}
+
+input[type="file"] {
+  border: none;
+  padding: 5px 0;
+}
+
+#filter {
+  margin-bottom: 1rem;
+}
