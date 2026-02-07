@@ -795,6 +795,84 @@ main {
   margin: 1.5rem auto 1rem;
 }
 
+.in-person-area-info {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.in-person-area-info p {
+  margin: 0;
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+.in-person-location-note {
+  color: #999;
+  font-size: 0.8rem;
+  font-style: italic;
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #CC0033;
+  background: #1a1a1a;
+}
+
+.safety-checklist {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: #1a1a1a;
+  border: 1px solid #CC0033;
+  border-radius: 8px;
+}
+
+.safety-checklist h4 {
+  color: #CC0033;
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.safety-intro {
+  color: #aaa;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.safety-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: #ccc;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.safety-item input[type="checkbox"] {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+  accent-color: #CC0033;
+  width: 16px;
+  height: 16px;
+}
+
+.platform-disclaimer {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #1a1010;
+  border: 1px solid #8B0000;
+  border-radius: 6px;
+}
+
+.platform-disclaimer p {
+  margin: 0;
+  color: #ccc;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 #age-verify-gate {
   min-height: 100vh;
   display: flex;

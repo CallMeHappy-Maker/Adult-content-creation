@@ -55,7 +55,7 @@ A web-based adult content creator marketplace where creators set up storefronts,
 - `js/client-signup.js` — Client sign-up logic (display name, location, bio, interests, profile save)
 - `js/signup.js` — Creator sign-up logic (DOB verification, profile pic upload, specialties, localStorage save)
 - `js/marketplace.js` — Landing page logic (loads creator cards from localStorage)
-- `js/creators.js` — Creator registration, storefront rendering, ordering with fee calculation
+- `js/creators.js` — Creator registration, storefront rendering, ordering with fee calculation, in-person safety checklist + disclaimer
 - `js/checkout.js` — Shared checkout/fee calculation utilities (legacy, functions duplicated in creators.js)
 - `server.js` — Express.js server on port 5000 with OIDC auth, session management, profile/auth APIs, messaging APIs, admin APIs
 - `docs/` — Trust & safety, compliance documentation, conversation history

@@ -308,11 +308,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("order-service-name").textContent = `Ordering: ${service.title} from ${profile.name}`;
 
+    const isInPerson = service.type === "in-person";
     const inPersonFields = document.getElementById("in-person-fields");
-    if (service.type === "in-person") {
+    const disclaimerEl = document.getElementById("platform-disclaimer");
+
+    if (isInPerson) {
       inPersonFields.classList.remove("hidden");
+      disclaimerEl.classList.remove("hidden");
+
+      const areaInfo = document.getElementById("in-person-creator-area");
+      const locationParts = [profile.city, profile.state_province].filter(Boolean);
+      if (locationParts.length > 0) {
+        areaInfo.innerHTML = `<p><strong>Creator's General Area:</strong> ${esc(locationParts.join(", "))}</p>`;
+      } else {
+        areaInfo.innerHTML = `<p><strong>Creator's General Area:</strong> Not specified — arrange via messaging after booking.</p>`;
+      }
+
+      document.querySelectorAll(".safety-cb").forEach(cb => { cb.checked = false; });
     } else {
       inPersonFields.classList.add("hidden");
+      disclaimerEl.classList.add("hidden");
     }
 
     const fees = calculateFees(service.price);
@@ -332,6 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     newCancelBtn.addEventListener("click", () => {
       container.classList.add("hidden");
+      disclaimerEl.classList.add("hidden");
       document.getElementById("buyer-name").value = "";
       document.getElementById("buyer-email").value = "";
       document.getElementById("buyer-details").value = "";
@@ -344,6 +360,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!buyerName) { orderFeedback.textContent = "Your name is required."; orderFeedback.style.color = "#f55"; return; }
       if (!buyerEmail) { orderFeedback.textContent = "Your email is required."; orderFeedback.style.color = "#f55"; return; }
+
+      if (isInPerson) {
+        const allChecked = Array.from(document.querySelectorAll(".safety-cb")).every(cb => cb.checked);
+        if (!allChecked) {
+          orderFeedback.textContent = "You must accept all safety checklist items before booking an in-person session.";
+          orderFeedback.style.color = "#f55";
+          document.getElementById("safety-checklist").scrollIntoView({ behavior: "smooth" });
+          return;
+        }
+      }
 
       orderFeedback.textContent = "Processing order...";
       orderFeedback.style.color = "#0f0";
