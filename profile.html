@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Creator Profile - FET Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+<script defer src="js/age-gate.js"></script>
+<script defer src="js/profile.js"></script>
+</head>
+<body>
+<div id="age-gate">
+  <h1>ADULT CONTENT WARNING</h1>
+  <p>
+    This website contains <strong>explicit sexual content</strong> intended strictly for adults.
+    By continuing, you confirm that you are <strong>18 years of age or older</strong>,
+    that you consent to viewing sexually explicit material,
+    and that such material is legal in your jurisdiction.
+  </p>
+  <button onclick="acceptAge()">I AM 18+ AND CONSENT</button>
+</div>
+
+<div id="main-content" class="hidden">
+  <header>
+    <h1>FET Platform</h1>
+    <p>Consent-first adult creator community</p>
+    <nav id="main-nav">
+      <a href="/">Home</a>
+      <a href="/profile.html" class="active">Profiles</a>
+      <a href="/messaging.html">Messages</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="profile-header">
+      <div class="profile-avatar" id="profile-avatar">?</div>
+      <h2 id="profile-name">Creator</h2>
+      <p id="profile-bio" class="profile-bio">No bio yet.</p>
+      <div class="profile-stats">
+        <div class="stat">
+          <span class="stat-number" id="stat-posts">0</span>
+          <span class="stat-label">Posts</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number" id="stat-public">0</span>
+          <span class="stat-label">Public</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number" id="stat-followers">0</span>
+          <span class="stat-label">Followers Only</span>
+        </div>
+      </div>
+      <button id="edit-profile-btn" class="hidden">Edit Profile</button>
+    </section>
+
+    <section id="profile-edit" class="hidden">
+      <h3>Edit Profile</h3>
+      <label for="edit-bio">Bio:</label>
+      <textarea id="edit-bio" rows="3" placeholder="Tell people about yourself..."></textarea>
+      <button id="save-profile-btn">Save Profile</button>
+      <button id="cancel-edit-btn" class="btn-secondary">Cancel</button>
+    </section>
+
+    <section id="profile-posts">
+      <h3>Posts</h3>
+      <div id="profile-post-list"></div>
+      <p id="no-posts-msg" class="hidden">This creator hasn't posted yet.</p>
+    </section>
+
+    <section id="all-creators">
+      <h3>All Creators</h3>
+      <div id="creators-list"></div>
+      <p id="no-creators-msg" class="hidden">No creators found yet. Start posting on the home page!</p>
+    </section>
+  </main>
+</div>
+</body>
+</html>

@@ -30,8 +30,233 @@ header p {
   color: #aaa;
 }
 
+#main-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+#main-nav a {
+  color: #ccc;
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #2a2a2a;
+  transition: background 0.2s, color 0.2s;
+}
+
+#main-nav a:hover {
+  background: #8B0000;
+  color: #fff;
+}
+
+#main-nav a.active {
+  background: #8B0000;
+  color: #fff;
+}
+
 main {
   padding: 1rem;
+}
+
+#profile-header {
+  max-width: 600px;
+  margin: 1rem auto;
+  text-align: center;
+  background: #1a1a1a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #8B0000;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  border: 3px solid #0ff;
+}
+
+#profile-header h2 {
+  margin: 0 0 0.25rem;
+  color: #0ff;
+  font-size: 1.4rem;
+}
+
+.profile-bio {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin: 0.25rem 0 1rem;
+}
+
+.profile-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #0ff;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+#edit-profile-btn {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  background: #333;
+  color: #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#edit-profile-btn:hover {
+  background: #8B0000;
+  color: #fff;
+}
+
+#profile-edit {
+  max-width: 600px;
+  margin: 1rem auto;
+  background: #1a1a1a;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+#profile-edit textarea {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+  border-radius: 6px;
+  border: none;
+  background: #222;
+  color: #eee;
+  box-sizing: border-box;
+}
+
+#save-profile-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #0ff;
+  color: #121212;
+  font-weight: bold;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.btn-secondary {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #333;
+  color: #eee;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #555;
+}
+
+#profile-posts {
+  max-width: 600px;
+  margin: 1rem auto;
+}
+
+#profile-posts h3 {
+  color: #0ff;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+#all-creators {
+  max-width: 600px;
+  margin: 1rem auto;
+}
+
+#all-creators h3 {
+  color: #0ff;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.5rem;
+}
+
+.creator-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #1a1a1a;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  text-decoration: none;
+  color: #eee;
+  border: 1px solid #2a2a2a;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.creator-card:hover {
+  border-color: #0ff;
+  background: #222;
+}
+
+.creator-card-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #8B0000;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.creator-card-info h4 {
+  margin: 0 0 0.25rem;
+  color: #0ff;
+}
+
+.creator-card-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.creator-card-info small {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.creator-link {
+  color: #0ff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.creator-link:hover {
+  text-decoration: underline;
 }
 
 /* ------------------------------
@@ -303,12 +528,24 @@ img, video {
     font-size: 0.8rem;
   }
 
+  #main-nav {
+    flex-wrap: wrap;
+  }
+
   #creator textarea {
     height: 100px;
   }
 
-  form, #creator, #feed {
+  form, #creator, #feed, #profile-header, #profile-posts, #all-creators, #profile-edit {
     margin-left: 0.5rem;
     margin-right: 0.5rem;
+  }
+
+  .profile-stats {
+    gap: 1rem;
+  }
+
+  .creator-card {
+    padding: 0.75rem;
   }
 }

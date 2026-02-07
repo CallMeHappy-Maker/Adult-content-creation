@@ -45,7 +45,7 @@ function addPostToFeed(content, visibility, mediaFile = null, creator = null) {
   }
 
   postEl.innerHTML = `
-    <strong>${creatorName}</strong>
+    <strong><a href="/profile.html?creator=${encodeURIComponent(creatorName)}" class="creator-link">${creatorName}</a></strong>
     <p>${content}</p>
     ${mediaHTML}
     <small>Visibility: ${visibility}</small>
@@ -106,6 +106,7 @@ createPostBtn.addEventListener("click", () => {
 
   addPostToFeed(content, visibility, mediaFile, creator);
   savePost(content, visibility, creator);
+  localStorage.setItem("lastCreatorName", creator);
 
   postContent.value = "";
   postMedia.value = "";

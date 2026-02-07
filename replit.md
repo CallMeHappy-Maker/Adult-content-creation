@@ -22,17 +22,28 @@ FET is a consent-first adult community and creator platform designed for fetish-
 - Modular structure ready for expansion
 - Safe baseline to build from without breaking paths
 - Static website with age gate and adult content appointment request form
+- Creator tools with post creation, media uploads, edit/delete, feed filtering
+- Checkout flow with transparent fee breakdown (creator fee, platform 15%, Stripe processing)
+- Moderated messaging console with consent overlay, violation detection, audit logs
+- Creator profile pages with bio editing and posts directory
+- Navigation bar linking all pages (Home, Profiles, Messages)
+- Dark theme (black/#8B0000 dark red/#0ff cyan)
 - Built with plain HTML, CSS, and vanilla JavaScript
 - Served by Express.js on port 5000
-- No backend/database yet — form submission shows an alert only
+- Data persisted in localStorage (no backend database yet)
 
 ## Project Architecture
-- `index.html` — Main page with age gate overlay and request form
-- `css/style.css` — Dark theme styling (black background, dark red accents)
+- `index.html` — Main page with age gate, request form, creator tools, checkout, feed
+- `profile.html` — Creator profile pages and creator directory
+- `messaging.html` — Moderated messaging console with consent overlay
+- `css/style.css` — Dark theme styling (black background, dark red accents, cyan highlights)
 - `js/age-gate.js` — Age gate toggle logic
-- `js/form-validation.js` — Form submission handler
+- `js/app.js` — Creator tools module (posts, feed, localStorage)
+- `js/checkout.js` — Checkout flow with fee calculations
+- `js/profile.js` — Profile page logic (creator profiles, bio editing, directory)
+- `js/form-validation.js` — Form submission handler (delegated to checkout.js)
 - `server.js` — Express.js static file server on port 5000
-- `docs/` — Trust & safety, compliance documentation
+- `docs/` — Trust & safety, compliance documentation, conversation history
 - `legal/` — Terms of service, privacy policy, disclaimer placeholders
 
 ## Planned Modules
@@ -70,6 +81,12 @@ FET is a consent-first adult community and creator platform designed for fetish-
 - `node server.js` — starts the app on port 5000
 
 ## Recent Changes
+- 2026-02-07: Added creator profile pages with bio editing and creator directory
+- 2026-02-07: Added navigation bar across all pages (Home, Profiles, Messages)
+- 2026-02-07: Creator names in feed now link to their profile pages
+- 2026-02-07: Added moderated messaging console (messaging.html)
+- 2026-02-07: Built checkout flow with fee breakdown (checkout.js)
+- 2026-02-07: Built creator tools module (post creation, edit/delete, feed)
 - 2026-02-07: Set up Express server, configured for Replit environment
 - 2026-02-07: Extracted legal/docs files from uploaded zip
 - 2026-02-07: Documented FET platform vision and roadmap
